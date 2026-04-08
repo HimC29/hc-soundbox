@@ -354,6 +354,6 @@ Built with amazing open-source tools and libraries:
 
 **Made with ❤️ by [HimC29](https://github.com/HimC29)**
 
-[Report Bug](https://github.com/HimC29/hc-soundbox/issues) • [Request Feature](https://github.com/HimC29/hc-soundbox/issues) • [Show Your Build](https://github.com/HimC29/hc-soundbox/discussions)
+[Report Bug](https://github.com/HimC29/hc-soundbox/issues) • [Request Feature](https://github.com/HimC29/hc-soundbox/issues)
 
 </div>
