@@ -101,15 +101,11 @@ void handlePlayingPage() {
 
     int rotaryReadings = readRotary();
     if(rotaryReadings != 0) {
-        if(rotaryReadings == 1) {
-            if(volume != 100) {
-                volume = min(100, volume + 2);
-            }
+        if(rotaryReadings > 0) {
+            volume = min(100, volume + rotaryReadings * 2);
         }
-        else if(rotaryReadings == -1) {
-            if(volume != 0) {
-                volume = max(0, volume - 2);
-            }
+        else if(rotaryReadings < 0) {
+            volume = max(0, volume + rotaryReadings * 2);
         }
         output->SetGain(volume / 100.0);
         updateVolumeDisplay();

@@ -4,20 +4,24 @@
 #include "../globals/globals.h"
 
 void updateMenuState(MenuState& state, int itemCount, int rotaryDirection) {
-    if(rotaryDirection == 1) {
-        if(state.selectedIndex != itemCount - 1) {
-            state.selectedIndex++;
-        }
-        else {
-            state.selectedIndex = 0;
+    if(rotaryDirection > 0) {
+        for (int i = 0; i < rotaryDirection; i++) {
+            if(state.selectedIndex != itemCount - 1) {
+                state.selectedIndex++;
+            }
+            else {
+                state.selectedIndex = 0;
+            }
         }
     }
-    else if(rotaryDirection == -1) {
-        if(state.selectedIndex != 0) {
-            state.selectedIndex--;
-        }
-        else {
-            state.selectedIndex = itemCount - 1;
+    else if(rotaryDirection < 0) {
+        for (int i = 0; i < -rotaryDirection; i++) {
+            if(state.selectedIndex != 0) {
+                state.selectedIndex--;
+            }
+            else {
+                state.selectedIndex = itemCount - 1;
+            }
         }
     }
 

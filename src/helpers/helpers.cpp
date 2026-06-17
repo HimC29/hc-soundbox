@@ -121,7 +121,5 @@ int readRotary() {
     rotaryDelta = 0;
     interrupts();
     
-    if (delta > 0) return 1;
-    if (delta < 0) return -1;
-    return 0;
+    return delta;
 }

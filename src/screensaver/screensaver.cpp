@@ -212,9 +212,9 @@ static void updateAndDrawOscilloscope() {
 bool handleScreensavers() {
     int rotaryReadings = readRotary();
     if (rotaryReadings != 0) {
-        if (rotaryReadings == 1) {
+        if (rotaryReadings > 0) {
             currentScreensaver = (ScreensaverType)((currentScreensaver + 1) % SS_COUNT);
-        } else if (rotaryReadings == -1) {
+        } else if (rotaryReadings < 0) {
             currentScreensaver = (ScreensaverType)((currentScreensaver - 1 + SS_COUNT) % SS_COUNT);
         }
         initActiveScreensaver();

@@ -123,9 +123,9 @@ bool handleBluetoothMode() {
 
     int rotaryReadings = readRotary();
     if(rotaryReadings != 0) {
-        if(rotaryReadings == 1 && volume < 100) volume = min(100, volume + 2);
-        else if(rotaryReadings == -1 && volume > 0) volume = max(0, volume - 2);
-
+        if(rotaryReadings > 0 && volume < 100) volume = min(100, volume + rotaryReadings * 2);
+        else if(rotaryReadings < 0 && volume > 0) volume = max(0, volume + rotaryReadings * 2);
+ 
         a2dpSink.set_volume(constrain(map(volume, 0, 100, 0, 127), 0, 127));
         btNeedsRedraw = true;
     }

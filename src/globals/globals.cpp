@@ -26,7 +26,7 @@ const uint8_t progressBarX = 14;
 const uint8_t progressBarY = 34;
 const uint8_t pauseBtnY = 51;
 
-const int debounceInterval = 100;
+const int debounceInterval = 15;
 
 const uint8_t backBtnPin = 4;
 const uint8_t swPin = 34;
