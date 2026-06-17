@@ -13,11 +13,13 @@
 #include "bt/bt.h"
 #include "rgb/rgb.h"
 
-enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH };
+#include "screensaver/screensaver.h"
+
+enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH, MODE_SCREENSAVER };
 AppMode appMode = MODE_SELECT;
 
-String modeItems[] = {"SD Card", "Bluetooth"};
-const int modeItemCount = 2;
+String modeItems[] = {"SD Card", "Bluetooth", "Screensavers"};
+const int modeItemCount = 3;
 const char* bluetoothName = "HC Soundbox";
 
 void drawModeMenu();
@@ -76,10 +78,15 @@ void handleModeSelect() {
             menuState.scrollOffset = 0;
             drawFileMenu();
         }
-        else {
+        else if(modeMenuState.selectedIndex == 1) {
             appMode = MODE_BLUETOOTH;
             releaseSdAudioOutput();
             startBluetoothMode(bluetoothName);
+        }
+        else if(modeMenuState.selectedIndex == 2) {
+            appMode = MODE_SCREENSAVER;
+            releaseSdAudioOutput();
+            initScreensavers();
         }
     }
 }
@@ -141,6 +148,13 @@ void loop() {
 
         if(handleBluetoothMode()) {
             initSdAudioOutput();
+            setRgbWhite();
+            drawModeMenu();
+            appMode = MODE_SELECT;
+        }
+    }
+    else if(appMode == MODE_SCREENSAVER) {
+        if(handleScreensavers()) {
             setRgbWhite();
             drawModeMenu();
             appMode = MODE_SELECT;

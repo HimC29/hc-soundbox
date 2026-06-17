@@ -80,6 +80,11 @@ void setRgbRainbow(bool enabled) {
     }
 }
 
+void setRgbColor(uint8_t r, uint8_t g, uint8_t b) {
+    rainbowEnabled = false;
+    writeRgb(r, g, b);
+}
+
 void updateRgb() {
     if(!rainbowEnabled) return;
 
