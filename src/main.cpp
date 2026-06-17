@@ -19,11 +19,11 @@
 enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH, MODE_SCREENSAVER, MODE_GAMES };
 AppMode appMode = MODE_SELECT;
 
-String modeItems[] = {"SD Card", "Bluetooth", "Screensavers", "Games"};
-const int modeItemCount = 4;
+String systemMenuItems[] = {"SD Card", "Bluetooth", "Screensavers", "Games"};
+const int systemMenuItemCount = 4;
 const char* bluetoothName = "HC Soundbox";
 
-void drawModeMenu();
+void drawSystemMenu();
 
 #if defined(ARDUINO_ARCH_ESP32)
 #define HC_ISR_ATTR IRAM_ATTR
@@ -51,26 +51,26 @@ void releaseSdAudioOutput() {
 }
 
 
-void handleModeSelect() {
+void handleSystemMenuSelect() {
     int rotaryReadings = readRotary();
     if(rotaryReadings != 0) {
-        updateMenuState(modeMenuState, modeItemCount, rotaryReadings);
-        drawMenu("Select Mode", modeItems, modeItemCount, modeMenuState.selectedIndex, 0, selectedScroll);
+        updateMenuState(systemMenuState, systemMenuItemCount, rotaryReadings);
+        drawMenu("System Menu", systemMenuItems, systemMenuItemCount, systemMenuState.selectedIndex, 0, selectedScroll);
     }
 
     swRotary.update();
     if(swRotary.pressed()) {
-        if(modeMenuState.selectedIndex == 0) {
+        if(systemMenuState.selectedIndex == 0) {
             appMode = MODE_SD;
             initSdAudioOutput();
             currentDir = "/";
             while(true) {
                 showInsertSdMessage();
-                // Allow user to go back to the mode menu while waiting for SD.
+                // Allow user to go back to the system menu while waiting for SD.
                 if(!awaitSdInitOrBack()) {
                     releaseSdAudioOutput();
                     appMode = MODE_SELECT;
-                    drawModeMenu();
+                    drawSystemMenu();
                     return;
                 }
                 if(updateDirContents(currentDir.c_str())) break;
@@ -79,17 +79,17 @@ void handleModeSelect() {
             menuState.scrollOffset = 0;
             drawFileMenu();
         }
-        else if(modeMenuState.selectedIndex == 1) {
+        else if(systemMenuState.selectedIndex == 1) {
             appMode = MODE_BLUETOOTH;
             releaseSdAudioOutput();
             startBluetoothMode(bluetoothName);
         }
-        else if(modeMenuState.selectedIndex == 2) {
+        else if(systemMenuState.selectedIndex == 2) {
             appMode = MODE_SCREENSAVER;
             releaseSdAudioOutput();
             initScreensavers();
         }
-        else if(modeMenuState.selectedIndex == 3) {
+        else if(systemMenuState.selectedIndex == 3) {
             appMode = MODE_GAMES;
             releaseSdAudioOutput();
             initGames();
@@ -97,8 +97,8 @@ void handleModeSelect() {
     }
 }
 
-void drawModeMenu() {
-    drawMenu("Select Mode", modeItems, modeItemCount, modeMenuState.selectedIndex, 0, selectedScroll);
+void drawSystemMenu() {
+    drawMenu("System Menu", systemMenuItems, systemMenuItemCount, systemMenuState.selectedIndex, 0, selectedScroll);
     setRgbWhite();
 }
 
@@ -122,13 +122,13 @@ void setup() {
     display.clearDisplay();
     display.display();
 
-    drawModeMenu();
+    drawSystemMenu();
 }
 
 void loop() {
     if(appMode == MODE_SELECT) {
         setRgbWhite();
-        handleModeSelect();
+        handleSystemMenuSelect();
     }
     else if(appMode == MODE_SD) {
         const bool isPlaying = (songInfo.format != "" && !songInfo.paused && !stopAudio);
@@ -143,7 +143,7 @@ void loop() {
         if(handleSdMode()) {
             setRgbRainbow(false);
             setRgbWhite();
-            drawModeMenu();
+            drawSystemMenu();
             appMode = MODE_SELECT;
         }
     }
@@ -155,21 +155,21 @@ void loop() {
         if(handleBluetoothMode()) {
             initSdAudioOutput();
             setRgbWhite();
-            drawModeMenu();
+            drawSystemMenu();
             appMode = MODE_SELECT;
         }
     }
     else if(appMode == MODE_SCREENSAVER) {
         if(handleScreensavers()) {
             setRgbWhite();
-            drawModeMenu();
+            drawSystemMenu();
             appMode = MODE_SELECT;
         }
     }
     else if(appMode == MODE_GAMES) {
         if(handleGamesMode()) {
             setRgbWhite();
-            drawModeMenu();
+            drawSystemMenu();
             appMode = MODE_SELECT;
         }
     }

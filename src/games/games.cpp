@@ -673,7 +673,7 @@ bool handleGamesMode() {
             backBtnLatched = false;
             if (millis() - lastTransitionTime >= 300) {
                 lastTransitionTime = millis();
-                return true; // Go back to SELECT MODE
+                return true; // Go back to SYSTEM MENU
             }
         }
     } else {

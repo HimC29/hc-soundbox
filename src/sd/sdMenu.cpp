@@ -143,7 +143,7 @@ void handlePlayingPage() {
         }
 
         if(sdCardRemoved) {
-            // Card was pulled - bail out to mode menu via handleSdMode return value
+            // Card was pulled - bail out to system menu via handleSdMode return value
             return;
         }
         else if(userStopped) {

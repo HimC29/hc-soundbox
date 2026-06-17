@@ -4,7 +4,7 @@
 AudioOutputI2S* output = nullptr;
 
 MenuState menuState = {0, 0};
-MenuState modeMenuState = {0, 0};
+MenuState systemMenuState = {0, 0};
 
 ScrollState dirScroll = {0, 0};
 ScrollState selectedScroll = {0, 0};

@@ -207,16 +207,16 @@ See the [Hardware Connections](#-hardware-connections) section below.
 
 ## 🎮 How to Use
 
-### Mode Select
+### System Menu
 
-On boot you’ll see a **Select Mode** menu:
+On boot you’ll see a **System Menu**:
 - **SD Card**: browse and play files from microSD
 - **Bluetooth**: stream audio from your phone (A2DP)
 
 ### SD Card Mode (How to play music)
 
 1. Insert a **FAT32**-formatted microSD card with `.mp3` / `.wav` files.
-2. From **Select Mode**, choose **SD Card**.
+2. From **System Menu**, choose **SD Card**.
 3. **Browse** with the rotary encoder:
    - Rotate = move selection up/down
    - Press = enter a folder / play a file
@@ -229,10 +229,10 @@ On boot you’ll see a **Select Mode** menu:
 
 ### Bluetooth Mode (How to connect)
 
-1. Select **Bluetooth** in the mode menu.
-2. On your phone/PC, open Bluetooth devices and pair/connect to **`HC Soundbox`**.
-3. Start playing audio — the ESP32 acts as a **Bluetooth A2DP speaker**.
-4. Back button returns you to the mode menu.
+1. Select **Bluetooth** in the System Menu.
+2. Search for BT devices on your phone/tablet/computer and connect to **HC Soundbox**.
+3. Play music or videos on your device.
+4. Back button returns you to the System Menu.
 
 ### Navigation Controls
 
@@ -240,7 +240,7 @@ On boot you’ll see a **Select Mode** menu:
 |---------|--------|
 | **Rotate encoder** | Scroll up/down in menus / Adjust volume (SD + Bluetooth) |
 | **Press encoder** | Select menu item / Enter folder / Play selected file / Pause & Resume (SD) |
-| **Back button** | Go back (SD: up directory / stop playback, BT: mode menu) |
+| **Back button** | Go back (SD: up directory / stop playback, BT: System Menu) |
 
 ### Playback Screen
 
@@ -378,14 +378,14 @@ Want to see your name here? Check out the [Contributing](#-contributing) section
 - Confirm the file format is `.mp3` or `.wav`
 
 ### Bluetooth device not showing up / can’t pair
-- Make sure you selected **Bluetooth** mode in the mode menu (it only advertises/acts as a speaker in BT mode)
+- Make sure you selected **Bluetooth** mode in the System Menu (it only advertises/acts as a speaker in BT mode)
 - Remove/forget **HC Soundbox** from your phone’s Bluetooth list and try pairing again
 - Reboot the ESP32 and retry
 
 ### Bluetooth connects but no audio
 - Confirm your phone is actually outputting audio to **HC Soundbox** (check the audio output route)
 - Try starting playback after the connection finishes
-- If you were previously in SD mode, go back to the mode menu and re-enter Bluetooth mode
+- If you were previously in SD mode, go back to the System Menu and re-enter Bluetooth mode
 
 ### Phone volume changes don’t update the ESP32 volume
 - Some phones/players don’t send AVRCP absolute volume updates in all cases; try changing volume from the system volume buttons (not in-app)

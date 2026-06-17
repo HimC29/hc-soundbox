@@ -11,7 +11,7 @@ struct MenuState {
     int scrollOffset;
 };
 extern MenuState menuState;
-extern MenuState modeMenuState;
+extern MenuState systemMenuState;
 
 struct ScrollState {
     int offset;
