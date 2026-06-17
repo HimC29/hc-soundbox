@@ -38,29 +38,17 @@ bool updateDirContents(const char* workingDirName) {
         return false;
     }
     
-    std::vector<String> fileNamesVec;
-    std::vector<bool> isDirVec;
+    dirContents.fileNames.clear();
+    dirContents.isDir.clear();
 
     while(true) {
         File entry = workingDir.openNextFile();
         if(!entry) break;
-        fileNamesVec.push_back(entry.name());
-        isDirVec.push_back(entry.isDirectory());
+        dirContents.fileNames.push_back(entry.name());
+        dirContents.isDir.push_back(entry.isDirectory());
     }
 
-    int fileCount = fileNamesVec.size();
-
-    String* fileNames = new String[fileCount];
-    bool* isDir = new bool[fileCount];
-
-    for(int i = 0; i < fileCount; i++) {
-        fileNames[i] = fileNamesVec[i];
-        isDir[i] = isDirVec[i];
-    }    
-    
-    dirContents.fileCount = fileCount;
-    dirContents.fileNames = fileNames;
-    dirContents.isDir = isDir;
+    dirContents.fileCount = dirContents.fileNames.size();
 
     return true;
 }

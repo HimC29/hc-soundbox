@@ -79,6 +79,13 @@ unsigned long getAudioLength(String fileLocation) {
 void audioTask(void* param) {
     bool running = true;
     while(running && !stopAudio) {
+        if(songInfo.paused) {
+            int16_t silence[2] = {0, 0};
+            if(!output || !output->ConsumeSample(silence)) {
+                vTaskDelay(10);
+            }
+            continue;
+        }
         if(songInfo.format == "mp3") running = mp3Decoder->loop();
         else running = wavDecoder->loop();
         if(!running && !stopAudio && !userStopped) {
@@ -116,6 +123,10 @@ void handleStartSong(String fileLocation, String fileName, String type) {
         songInfo.format = "wav";
     }
 
+    if(output) {
+        output->SetGain(volume / 100.0);
+    }
+
     songInfo.name = fileName;
     songInfo.fileLocation = fileLocation;
     songInfo.startTime = millis();
@@ -127,32 +138,13 @@ void handleStartSong(String fileLocation, String fileName, String type) {
 }
 
 void handlePause() {
-    songInfo.savedPos = source->getPos();
-    stopAudio = true;
     songInfo.paused = true;
     songInfo.pausedAt = millis() - songInfo.startTime;
-
-    while(audioTaskHandle != NULL) {
-        vTaskDelay(1);
-    }
+    if(output) output->SetGain(0);
 }
 
 void handleResume() {
-    stopAudio = false;
-    source = new AudioFileSourceSD(songInfo.fileLocation.c_str());
-
-    if(songInfo.format == "mp3") {
-        mp3Decoder = new AudioGeneratorMP3();
-        mp3Decoder->begin(source, output);
-    }
-    else if(songInfo.format == "wav") {
-        wavDecoder = new AudioGeneratorWAV();
-        wavDecoder->begin(source, output);
-    }
-
-    source->seek(songInfo.savedPos, 0);
-    
+    if(output) output->SetGain(volume / 100.0);
     songInfo.startTime = millis() - songInfo.pausedAt;
     songInfo.paused = false;
-    xTaskCreatePinnedToCore(audioTask, "audioTask", 8192, NULL, 1, &audioTaskHandle, 0);
 }

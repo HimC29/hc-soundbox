@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <vector>
 #include <AudioFileSourceSD.h>
 #include <AudioGeneratorMP3.h>
 #include <AudioGeneratorWAV.h>
@@ -12,9 +13,9 @@ extern AudioGeneratorMP3* mp3Decoder;
 extern AudioGeneratorWAV* wavDecoder;
 
 struct DirContents {
-    String* fileNames;
+    std::vector<String> fileNames;
     int fileCount;
-    bool* isDir;
+    std::vector<bool> isDir;
 };
 extern DirContents dirContents;
 

@@ -76,17 +76,52 @@ bool awaitSdInitOrBack() {
     }
 }
 
-// Function to get current rotary encoder state
-int readRotary() {
-    static int lastState = 0;
-    static int8_t enc_states[] = {0,-1,1,0, 1,0,0,-1, -1,0,0,1, 0,1,-1,0};
-    static int8_t accumulator = 0;
+static volatile int rotaryDelta = 0;
+static int lastState = 0;
+static int8_t accumulator = 0;
 
+static void IRAM_ATTR encoderISR() {
+    static const int8_t enc_states[] = {0,-1,1,0, 1,0,0,-1, -1,0,0,1, 0,1,-1,0};
+    
     int currentState = (digitalRead(clkPin) << 1) | digitalRead(dtPin);
-    accumulator += enc_states[(lastState << 2) | currentState];
+    int8_t step = enc_states[(lastState << 2) | currentState];
     lastState = currentState;
 
-    if (accumulator >= 4) { accumulator = 0; return 1; }
-    if (accumulator <= -4) { accumulator = 0; return -1; }
+    if (step != 0) {
+        accumulator += step;
+        if (accumulator >= 4) {
+            accumulator = 0;
+            rotaryDelta = rotaryDelta + 1;
+        }
+        else if (accumulator <= -4) {
+            accumulator = 0;
+            rotaryDelta = rotaryDelta - 1;
+        }
+    }
+}
+
+void initRotaryInterrupt() {
+    pinMode(clkPin, INPUT_PULLUP);
+    pinMode(dtPin, INPUT_PULLUP);
+    
+    // Read initial state
+    lastState = (digitalRead(clkPin) << 1) | digitalRead(dtPin);
+    accumulator = 0;
+    
+    attachInterrupt(digitalPinToInterrupt(clkPin), encoderISR, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(dtPin), encoderISR, CHANGE);
+}
+
+// Function to get current rotary encoder state
+int readRotary() {
+    if (rotaryDelta == 0) return 0;
+    
+    noInterrupts();
+    int delta = rotaryDelta;
+    rotaryDelta = 0;
+    interrupts();
+    
+    if (delta > 0) return 1;
+    if (delta < 0) return -1;
     return 0;
 }

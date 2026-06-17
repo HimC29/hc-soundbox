@@ -93,8 +93,7 @@ void setup() {
     Serial.begin(115200);
     initRgb();
 
-    pinMode(clkPin, INPUT_PULLUP);
-    pinMode(dtPin, INPUT_PULLUP);
+    initRotaryInterrupt();
     swRotary.attach(swPin, INPUT);
     swRotary.interval(debounceInterval);
 

@@ -127,27 +127,31 @@ void drawMenu(String title,
 }
 
 void drawFileMenu() {
-    String* fileNames = dirContents.fileNames;
     int fileCount = dirContents.fileCount;
-    
-    String* formattedFileNames = new String[fileCount];
-    for(int i = 0; i < fileCount; i++) {
-        if(dirContents.isDir[i]) {
-            formattedFileNames[i] = "> " + fileNames[i];
+    int scrollOffset = menuState.scrollOffset;
+    int selectedIndex = menuState.selectedIndex;
+
+    // Number of items to draw
+    int visibleCount = min((int)maxViewableItems, fileCount - scrollOffset);
+    if (visibleCount < 0) visibleCount = 0;
+
+    String visibleItems[maxViewableItems];
+    for(int i = 0; i < visibleCount; i++) {
+        int idx = scrollOffset + i;
+        if(dirContents.isDir[idx]) {
+            visibleItems[i] = "> " + dirContents.fileNames[idx];
         }
         else {
-            formattedFileNames[i] = fileNames[i];
+            visibleItems[i] = dirContents.fileNames[idx];
         }
     }
 
     drawMenu(currentDir,
-             formattedFileNames,
-             fileCount,
-             menuState.selectedIndex,
-             menuState.scrollOffset,
+             visibleItems,
+             visibleCount,
+             selectedIndex - scrollOffset,
+             0,
              selectedScroll);
-
-    delete[] formattedFileNames;
 }
 
 void updateSelectedItemDisplay() {

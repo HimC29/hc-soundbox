@@ -7,4 +7,5 @@ String millisToMinSec(unsigned long milliseconds);
 String getFileFormat(String filename);
 void awaitSdInit();
 bool awaitSdInitOrBack();
+void initRotaryInterrupt();
 int readRotary();

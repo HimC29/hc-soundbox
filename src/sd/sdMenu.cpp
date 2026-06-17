@@ -2,6 +2,7 @@
 #include "sdGlobals.h"
 #include "sdAudio.h"
 #include "sdState.h"
+#include <SD.h>
 #include "../globals/globals.h"
 #include "../display/display.h"
 #include "../helpers/helpers.h"
@@ -26,9 +27,6 @@ bool handleSongPicker() {
                 newDir = currentDir + "/" + dirContents.fileNames[menuState.selectedIndex];
             }
             
-            delete[] dirContents.fileNames;
-            delete[] dirContents.isDir;
-
             currentDir = newDir;
 
             menuState.selectedIndex = 0;
@@ -72,9 +70,6 @@ bool handleSongPicker() {
             if(newDir == "") {
                 newDir = "/";
             }
-
-            delete[] dirContents.fileNames;
-            delete[] dirContents.isDir;
 
             currentDir = newDir;
 
@@ -132,21 +127,24 @@ void handlePlayingPage() {
 
     backBtn.update();
     if(backBtn.pressed()) {
-        if(songInfo.paused) {
-            songInfo.format = "";
-            songInfo.paused = false;
-            stopAudio = false;
-            drawFileMenu();
-        }
-        else {
-            userStopped = true;
-            stopAudio = true;
-        }
+        userStopped = true;
+        stopAudio = true;
+        songInfo.paused = false; // ensure task loop unblocks and terminates
+        if(output) output->stop(); // Force I2S output to stop so WAV decoder loop unblocks
     }
 
     if(audioTaskHandle == NULL && stopAudio && !songInfo.paused) {
         songInfo.format = "";
         stopAudio = false;
+
+        if(sdCardRemoved) {
+            // Check if card is actually removed or if it was just a natural EOF
+            File root = SD.open("/");
+            if(root) {
+                root.close();
+                sdCardRemoved = false;
+            }
+        }
 
         if(sdCardRemoved) {
             // Card was pulled - bail out to mode menu via handleSdMode return value
