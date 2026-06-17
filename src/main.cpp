@@ -60,39 +60,41 @@ void handleSystemMenuSelect() {
 
     swRotary.update();
     if(swRotary.pressed()) {
-        if(systemMenuState.selectedIndex == 0) {
-            appMode = MODE_SD;
-            initSdAudioOutput();
-            currentDir = "/";
-            while(true) {
-                showInsertSdMessage();
-                // Allow user to go back to the system menu while waiting for SD.
-                if(!awaitSdInitOrBack()) {
-                    releaseSdAudioOutput();
-                    appMode = MODE_SELECT;
-                    drawSystemMenu();
-                    return;
+        switch(systemMenuState.selectedIndex) {
+            case 0:
+                appMode = MODE_SD;
+                initSdAudioOutput();
+                currentDir = "/";
+                while(true) {
+                    showInsertSdMessage();
+                    // Allow user to go back to the system menu while waiting for SD.
+                    if(!awaitSdInitOrBack()) {
+                        releaseSdAudioOutput();
+                        appMode = MODE_SELECT;
+                        drawSystemMenu();
+                        return;
+                    }
+                    if(updateDirContents(currentDir.c_str())) break;
                 }
-                if(updateDirContents(currentDir.c_str())) break;
-            }
-            menuState.selectedIndex = 0;
-            menuState.scrollOffset = 0;
-            drawFileMenu();
-        }
-        else if(systemMenuState.selectedIndex == 1) {
-            appMode = MODE_BLUETOOTH;
-            releaseSdAudioOutput();
-            startBluetoothMode(bluetoothName);
-        }
-        else if(systemMenuState.selectedIndex == 2) {
-            appMode = MODE_SCREENSAVER;
-            releaseSdAudioOutput();
-            initScreensavers();
-        }
-        else if(systemMenuState.selectedIndex == 3) {
-            appMode = MODE_GAMES;
-            releaseSdAudioOutput();
-            initGames();
+                menuState.selectedIndex = 0;
+                menuState.scrollOffset = 0;
+                drawFileMenu();
+                break;
+            case 1:
+                appMode = MODE_BLUETOOTH;
+                releaseSdAudioOutput();
+                startBluetoothMode(bluetoothName);
+                break;
+            case 2:
+                appMode = MODE_SCREENSAVER;
+                releaseSdAudioOutput();
+                initScreensavers();
+                break;
+            case 3:
+                appMode = MODE_GAMES;
+                releaseSdAudioOutput();
+                initGames();
+                break;
         }
     }
 }
@@ -126,52 +128,62 @@ void setup() {
 }
 
 void loop() {
-    if(appMode == MODE_SELECT) {
-        setRgbWhite();
-        handleSystemMenuSelect();
-    }
-    else if(appMode == MODE_SD) {
-        const bool isPlaying = (songInfo.format != "" && !songInfo.paused && !stopAudio);
-        if(isPlaying) {
-            setRgbRainbow(true);
-            updateRgb();
-        } else {
-            setRgbRainbow(false);
-            setRgbPurple();
+    switch(appMode) {
+        case MODE_SELECT:
+            setRgbWhite();
+            handleSystemMenuSelect();
+            break;
+
+        case MODE_SD: {
+            const bool isPlaying = (songInfo.format != "" && !songInfo.paused && !stopAudio);
+            if(isPlaying) {
+                setRgbRainbow(true);
+                updateRgb();
+            } else {
+                setRgbRainbow(false);
+                setRgbPurple();
+            }
+
+            if(handleSdMode()) {
+                setRgbRainbow(false);
+                setRgbWhite();
+                drawSystemMenu();
+                appMode = MODE_SELECT;
+            }
+            break;
         }
 
-        if(handleSdMode()) {
+        case MODE_BLUETOOTH:
             setRgbRainbow(false);
-            setRgbWhite();
-            drawSystemMenu();
-            appMode = MODE_SELECT;
-        }
-    }
-    else if(appMode == MODE_BLUETOOTH) {
-        setRgbRainbow(false);
-        if(isBluetoothConnected()) setRgbBlue();
-        else setRgbRed();
+            if(isBluetoothConnected()) {
+                setRgbBlue();
+            } else {
+                setRgbRed();
+            }
 
-        if(handleBluetoothMode()) {
-            initSdAudioOutput();
-            setRgbWhite();
-            drawSystemMenu();
-            appMode = MODE_SELECT;
-        }
-    }
-    else if(appMode == MODE_SCREENSAVER) {
-        if(handleScreensavers()) {
-            setRgbWhite();
-            drawSystemMenu();
-            appMode = MODE_SELECT;
-        }
-    }
-    else if(appMode == MODE_GAMES) {
-        if(handleGamesMode()) {
-            setRgbWhite();
-            drawSystemMenu();
-            appMode = MODE_SELECT;
-        }
+            if(handleBluetoothMode()) {
+                initSdAudioOutput();
+                setRgbWhite();
+                drawSystemMenu();
+                appMode = MODE_SELECT;
+            }
+            break;
+
+        case MODE_SCREENSAVER:
+            if(handleScreensavers()) {
+                setRgbWhite();
+                drawSystemMenu();
+                appMode = MODE_SELECT;
+            }
+            break;
+
+        case MODE_GAMES:
+            if(handleGamesMode()) {
+                setRgbWhite();
+                drawSystemMenu();
+                appMode = MODE_SELECT;
+            }
+            break;
     }
     delay(1);
 }
