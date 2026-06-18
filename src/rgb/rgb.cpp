@@ -1,4 +1,5 @@
 #include "rgb.h"
+#include "../globals/settings.h"
 
 namespace {
 constexpr uint8_t RED_PIN = 14;
@@ -13,10 +14,17 @@ bool rainbowEnabled = false;
 unsigned long lastStepMs = 0;
 uint16_t hue = 0; // 0..359
 
+uint8_t lastR = 255;
+uint8_t lastG = 255;
+uint8_t lastB = 255;
+
 void writeRgb(uint8_t r, uint8_t g, uint8_t b) {
-    const uint8_t rr = (uint16_t)r * RED_LEVEL / 255;
-    const uint8_t gg = (uint16_t)g * GREEN_LEVEL / 255;
-    const uint8_t bb = (uint16_t)b * BLUE_LEVEL / 255;
+    lastR = r;
+    lastG = g;
+    lastB = b;
+    const uint8_t rr = (uint32_t)r * RED_LEVEL * Settings::ledBrightness / (255 * 255);
+    const uint8_t gg = (uint32_t)g * GREEN_LEVEL * Settings::ledBrightness / (255 * 255);
+    const uint8_t bb = (uint32_t)b * BLUE_LEVEL * Settings::ledBrightness / (255 * 255);
     analogWrite(RED_PIN, rr);
     analogWrite(GREEN_PIN, gg);
     analogWrite(BLUE_PIN, bb);
@@ -97,4 +105,8 @@ void updateRgb() {
     writeRgb(r, g, b);
 
     hue = (hue + 1) % 360;
+}
+
+void applyLedBrightness() {
+    writeRgb(lastR, lastG, lastB);
 }

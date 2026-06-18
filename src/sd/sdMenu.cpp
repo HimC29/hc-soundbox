@@ -6,6 +6,7 @@
 #include "../globals/globals.h"
 #include "../display/display.h"
 #include "../helpers/helpers.h"
+#include "../globals/settings.h"
 
 bool handleSongPicker() {
     static unsigned long lastMenuDraw = 0;
@@ -102,10 +103,10 @@ void handlePlayingPage() {
     int rotaryReadings = readRotary();
     if(rotaryReadings != 0) {
         if(rotaryReadings > 0) {
-            volume = min(100, volume + rotaryReadings * 2);
+            volume = min(100, volume + rotaryReadings * Settings::volumeStep);
         }
         else if(rotaryReadings < 0) {
-            volume = max(0, volume + rotaryReadings * 2);
+            volume = max(0, volume + rotaryReadings * Settings::volumeStep);
         }
         output->SetGain(volume / 100.0);
         updateVolumeDisplay();

@@ -6,6 +6,7 @@
 #include "../globals/globals.h"
 #include "../display/display.h"
 #include "../helpers/helpers.h"
+#include "../globals/settings.h"
 
 I2SClass btI2S;
 BluetoothA2DPSinkQueued a2dpSink(btI2S);
@@ -123,8 +124,8 @@ bool handleBluetoothMode() {
 
     int rotaryReadings = readRotary();
     if(rotaryReadings != 0) {
-        if(rotaryReadings > 0 && volume < 100) volume = min(100, volume + rotaryReadings * 2);
-        else if(rotaryReadings < 0 && volume > 0) volume = max(0, volume + rotaryReadings * 2);
+        if(rotaryReadings > 0 && volume < 100) volume = min(100, volume + rotaryReadings * Settings::volumeStep);
+        else if(rotaryReadings < 0 && volume > 0) volume = max(0, volume + rotaryReadings * Settings::volumeStep);
  
         a2dpSink.set_volume(constrain(map(volume, 0, 100, 0, 127), 0, 127));
         btNeedsRedraw = true;

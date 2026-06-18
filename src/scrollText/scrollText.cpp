@@ -1,4 +1,5 @@
 #include "../globals/globals.h"
+#include "../globals/settings.h"
 
 void updateScroll(ScrollState& state, String& text, uint16_t scrollDelay) {
     if(millis() - state.lastScrollTime >= scrollDelay) {

@@ -15,12 +15,14 @@
 
 #include "screensaver/screensaver.h"
 #include "games/games.h"
+#include "globals/settings.h"
+#include "controls/controls.h"
 
-enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH, MODE_SCREENSAVER, MODE_GAMES };
+enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH, MODE_SCREENSAVER, MODE_GAMES, MODE_CONTROLS };
 AppMode appMode = MODE_SELECT;
 
-String systemMenuItems[] = {"SD Card", "Bluetooth", "Screensavers", "Games"};
-const int systemMenuItemCount = 4;
+String systemMenuItems[] = {"SD Card", "Bluetooth", "Screensavers", "Games", "Settings"};
+const int systemMenuItemCount = 5;
 const char* bluetoothName = "HC Soundbox";
 
 void drawSystemMenu();
@@ -63,6 +65,7 @@ void handleSystemMenuSelect() {
         switch(systemMenuState.selectedIndex) {
             case 0:
                 appMode = MODE_SD;
+                volume = Settings::defaultSdVol;
                 initSdAudioOutput();
                 currentDir = "/";
                 while(true) {
@@ -82,6 +85,7 @@ void handleSystemMenuSelect() {
                 break;
             case 1:
                 appMode = MODE_BLUETOOTH;
+                volume = Settings::defaultBtVol;
                 releaseSdAudioOutput();
                 startBluetoothMode(bluetoothName);
                 break;
@@ -95,6 +99,10 @@ void handleSystemMenuSelect() {
                 releaseSdAudioOutput();
                 initGames();
                 break;
+            case 4:
+                appMode = MODE_CONTROLS;
+                initControlsMenu();
+                break;
         }
     }
 }
@@ -107,6 +115,8 @@ void drawSystemMenu() {
 void setup() {
     Serial.begin(115200);
     initRgb();
+
+    Settings::load();
 
     initRotaryInterrupt();
     swRotary.attach(swPin, INPUT);
@@ -124,6 +134,8 @@ void setup() {
     display.clearDisplay();
     display.display();
 
+    Settings::applyBrightness();
+    Settings::applyLedBrightness();
     drawSystemMenu();
 }
 
@@ -179,6 +191,14 @@ void loop() {
 
         case MODE_GAMES:
             if(handleGamesMode()) {
+                setRgbWhite();
+                drawSystemMenu();
+                appMode = MODE_SELECT;
+            }
+            break;
+
+        case MODE_CONTROLS:
+            if(handleControlsMode()) {
                 setRgbWhite();
                 drawSystemMenu();
                 appMode = MODE_SELECT;
