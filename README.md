@@ -2,15 +2,15 @@
 
 # 🎵 HC Soundbox
 
-### A Portable MP3/WAV Player Built with ESP32
+### A Portable MP3/WAV Player and Retro Console Built with ESP32
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-yellow.svg?style=for-the-badge)](https://opensource.org/license/gpl-3.0)
 [![ESP32](https://img.shields.io/badge/ESP32-PlatformIO-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
 
-**A standalone MP3/WAV player with OLED + rotary controls, with 2 modes: microSD playback and Bluetooth A2DP audio — all powered by an ESP32.**
+**A standalone MP3/WAV player, retro game console, and ambient visualizer with OLED + rotary controls, supporting microSD playback, Bluetooth A2DP audio streaming, screensavers, games, and persistent system configurations — all powered by an ESP32.**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Hardware](#-hardware) • [Contributing](#-contributing)
+[Features](#-features) • [Quick Start](#-quick-start) • [Hardware](#-hardware) • [How to Use](#-how-to-use) • [Contributing](#-contributing)
 
 </div>
 
@@ -22,38 +22,44 @@
 <tr>
 <td>
 
-🎶 **MP3 & WAV Playback**
+🎶 **MP3 & WAV Playback**  
 Play music from microSD card via I2S DAC
 
-📁 **File Browser**
-Navigate folders and files directly from the SD card
+📁 **File Browser**  
+Navigate folders and files directly from the SD card with customizable sorting
 
-🖥️ **OLED Display**
-0.96" screen with scrolling titles and progress bar
+🖥️ **OLED Display**  
+0.96" screen with scrolling titles, menus, and progress bar
 
-🎛️ **Rotary Encoder**
-Smooth navigation and volume control in one knob
+🎛️ **Rotary Encoder**  
+Smooth navigation, menu control, and volume adjusting in one knob
 
-🔊 **Real-Time Volume**
-Adjust gain on the fly with the rotary encoder
+🔊 **Real-Time Volume**  
+Adjust gain on the fly with customizable volume step sizes
+
+🌟 **Status RGB LED**  
+Smart visual feedback dynamically matched to system mode, playback state, and games
 
 </td>
 <td>
 
-📶 **Bluetooth Mode (A2DP Sink)**
+📶 **Bluetooth Mode (A2DP Sink)**  
 Stream audio from your phone over Bluetooth
 
-📱 **Phone Volume Sync**
-Changing volume on your phone updates the ESP32 volume
+📱 **Phone Volume Sync**  
+Changing volume on your phone updates the ESP32 volume in real-time
 
-⏭️ **Auto-Advance**
+👾 **Retro Games**  
+Onboard rotary-controlled mini-games: Pong, Flappy Bird, and Breakout
+
+🌌 **Screensavers**  
+Classic animations: DVD Bouncing Logo, Matrix digital rain, and Oscilloscope
+
+⚙️ **Persistent Settings**  
+Adjust screen/LED brightness, volume defaults, and saving choices across reboots
+
+⏭️ **Auto-Advance**  
 Automatically plays the next track when a song ends
-
-⏸️ **Pause & Resume**
-Resume from exactly where you left off
-
-⚡ **USB Powered**
-Portable with any USB power bank
 
 </td>
 </tr>
@@ -67,10 +73,10 @@ In an era of streaming services and smartphone apps, there's something special a
 
 ### The Motivation
 - 🎧 **Tangible music experience** — Physical controls beat touchscreens for music control
-- 🛠️ **Learn by building** — Great project for understanding ESP32, I2S audio, displays, and FreeRTOS tasks
-- 📵 **Distraction-free listening** — No notifications, no apps, just music
-- 🎨 **Customizable** — Browse any folder structure, play any MP3 or WAV file
-- 💰 **Affordable** — Build a unique music player for under $20
+- 🛠️ **Learn by building** — Great project for understanding ESP32, I2S audio, displays, RGB PWM control, and FreeRTOS tasks
+- 📵 **Distraction-free listening** — No notifications, no apps, just music and quick retro games
+- 🎨 **Customizable** — Browse any folder structure, play any MP3 or WAV file, tweak screen brightness, and adjust sorting
+- 💰 **Affordable** — Build a unique music player/retro mini-console for under $20
 
 ---
 
@@ -79,11 +85,12 @@ In an era of streaming services and smartphone apps, there's something special a
 ### Prerequisites
 
 **Hardware:**
-- ESP32 development board
+- ESP32 development board (e.g., NodeMCU-32S / ESP32 DevKitC)
 - I2S DAC module (e.g. MAX98357A)
 - 0.96" I2C OLED display (SSD1306)
-- Rotary encoder with push button
-- 1 push button (back)
+- Rotary encoder with push button (EC11)
+- 1 push button (back button)
+- Common Cathode RGB LED
 - Speaker (compatible with your DAC)
 - microSD card module
 - microSD card
@@ -102,7 +109,7 @@ cd hc-soundbox
 
 **2. Open in PlatformIO**
 
-Open the project folder in VS Code with the PlatformIO extension installed. Dependencies are declared in `platformio.ini` and will be installed automatically:
+Open the project folder in VS Code with the PlatformIO extension installed. Dependencies are declared in [platformio.ini](file:///home/himc29/Projects/Projects/electronics/embedded/hc-soundbox/hc-soundbox/platformio.ini) and will be installed automatically:
 - `Adafruit GFX Library`
 - `Adafruit SSD1306`
 - `Bounce2`
@@ -110,11 +117,11 @@ Open the project folder in VS Code with the PlatformIO extension installed. Depe
 - `ESP32-A2DP`
 
 **3. (Optional) Prepare your microSD card**
-- If you only want to use HC Soundbox as a **Bluetooth speaker**, you can skip the microSD module + card entirely.
-- Add songs into the card
-- No special naming convention required
-- Organize files however you like — the file browser mirrors your folder structure
-- Supported formats: .mp3, .wav
+- If you only want to use HC Soundbox as a **Bluetooth speaker/games console**, you can skip the microSD module + card entirely.
+- Add songs into the card.
+- No special naming convention required.
+- Organize files however you like — the file browser mirrors your folder structure.
+- Supported formats: `.mp3`, `.wav`.
 
 **4. Wire the components**
 
@@ -135,18 +142,18 @@ See the [Hardware Connections](#-hardware-connections) section below.
 | Component | Quantity | Notes |
 |-----------|----------|-------|
 | ESP32 Dev Board | 1 | Any standard ESP32 board |
-| MAX98357A | 1 |  |
+| MAX98357A | 1 | I2S Mono Amp & DAC |
 | OLED Display | 1 | 0.96" I2C (SSD1306) |
 | Rotary Encoder | 1 | With push button (EC11 or similar) |
 | Push Button | 1 | Momentary tactile switch (back) |
 | Speaker | 1 | Compatible with your DAC |
 | microSD Module | 1 | SPI interface |
-| microSD Card | 1 | Any size |
-| RGB LED | 1 |  |
+| microSD Card | 1 | Any size (formatted as FAT32) |
+| RGB LED | 1 | Common Cathode |
 
 ### 🔌 Hardware Connections
 
-**You can view schematics instead in [HC_SoundBox.pdf](schematics/HC_SoundBox.pdf)**
+**You can view schematics instead in [HC_SoundBox.pdf](file:///home/himc29/Projects/Projects/electronics/embedded/hc-soundbox/hc-soundbox/schematics/HC_SoundBox.pdf)**
 
 #### Rotary Encoder
 
@@ -209,50 +216,87 @@ See the [Hardware Connections](#-hardware-connections) section below.
 
 ### System Menu
 
-On boot you’ll see a **System Menu**:
-- **SD Card**: browse and play files from microSD
-- **Bluetooth**: stream audio from your phone (A2DP)
+On boot, you will be presented with the **System Menu**:
+- **SD Card**: Browse and play audio files from microSD card
+- **Bluetooth**: Stream audio from your phone/device via A2DP
+- **Screensavers**: Run vintage graphics rendering modes
+- **Games**: Play onboard mini-games using the rotary controller
+- **Settings**: Tweak visual, audio, sorting, and system options
 
 ### SD Card Mode (How to play music)
 
-1. Insert a **FAT32**-formatted microSD card with `.mp3` / `.wav` files.
-2. From **System Menu**, choose **SD Card**.
-3. **Browse** with the rotary encoder:
+1. Insert a **FAT32**-formatted microSD card containing `.mp3` / `.wav` files.
+2. From the **System Menu**, select **SD Card**.
+3. **Browse** using the rotary encoder:
    - Rotate = move selection up/down
-   - Press = enter a folder / play a file
+   - Press = enter folder / play selected file
 4. While playing:
    - Rotate = change volume
    - Press = pause / resume
    - Back = stop playback and return to the file browser
 5. In the file browser:
-   - Back = go up one directory (and from SD root, back returns to mode select)
+   - Back = go up one directory (from the SD root, back returns to the main menu)
 
 ### Bluetooth Mode (How to connect)
 
 1. Select **Bluetooth** in the System Menu.
 2. Search for BT devices on your phone/tablet/computer and connect to **HC Soundbox**.
-3. Play music or videos on your device.
-4. Back button returns you to the System Menu.
+3. Play music or video audio on your device.
+4. Back button disconnects/exits Bluetooth mode and returns to the System Menu.
 
-### Navigation Controls
+### Screensaver Mode
 
-| Control | Action |
-|---------|--------|
-| **Rotate encoder** | Scroll up/down in menus / Adjust volume (SD + Bluetooth) |
-| **Press encoder** | Select menu item / Enter folder / Play selected file / Pause & Resume (SD) |
-| **Back button** | Go back (SD: up directory / stop playback, BT: System Menu) |
+1. Select **Screensavers** in the System Menu.
+2. Use the rotary encoder to toggle between:
+   - **DVD**: The retro bouncing logo bounce screen
+   - **Matrix**: Dropping green digital code rain
+   - **Oscilloscope**: Simulated waveform pattern generator
+3. Press the back button to exit back to the System Menu.
 
-### Playback Screen
+### Games Mode
 
-While a song is playing, the display shows:
-- Scrolling song title
-- Current position / total length progress bar
-- Current volume level
-- Pause/Resume button indicator
+1. Select **Games** in the System Menu.
+2. Choose from the three installed games:
+   - **Pong**: Single-player vs an AI opponent. Rotate the encoder to move your paddle.
+   - **Flappy Bird**: Press the rotary encoder switch to flap and guide the bird through obstacles.
+   - **Breakout**: Destroy blocks by bouncing a ball with a paddle moved via the rotary encoder.
+3. Press the back button to exit the current game or return to the System Menu.
 
-### Auto-Advance
+### Settings Mode (Controls)
 
-When a song finishes, the player automatically plays the next file in the current directory. It wraps back to the first file after the last one.
+1. Select **Settings** in the System Menu.
+2. Scroll to the setting you want to change:
+   - **OLED Bright**: Adjust screen brightness (15 to 255)
+   - **LED Bright**: Adjust RGB status LED brightness (0 to 255)
+   - **Volume Step**: Volume increment/decrement step size (1 to 20)
+   - **SD Def Vol**: Default volume value loaded when entering SD mode (0 to 100%)
+   - **BT Def Vol**: Default volume value loaded when entering Bluetooth mode (0 to 100%)
+   - **Song Sort**: Sort order for folder files (`A-Z`, `Z-A`, or standard `File Order`)
+   - **Restore Defaults**: Overwrite custom configurations with factory defaults
+3. Edit the selected configuration:
+   - Press the encoder to enter edit mode (indicated by `<` and `>` wrapping the value).
+   - Rotate the encoder to adjust the value.
+   - Press the encoder again to save to NVS and exit edit mode.
+   - Or, press the back button to cancel the change and restore the previous setting.
+
+### Navigation Controls Summary
+
+| Control | System / Menu Mode | SD Playback Mode | Settings (Edit Mode) | Game Mode |
+|---------|--------------------|------------------|----------------------|-----------|
+| **Rotate Encoder** | Scroll menu selection | Adjust volume | Adjust value | Move paddle / control |
+| **Press Encoder** | Select item / Enter | Pause / Resume | Confirm and save | Game start / Flap (Flappy) |
+| **Back Button** | Go back / Up folder | Stop playback | Cancel edit | Exit game / Exit to Menu |
+
+### RGB Status LED States
+
+| LED Behavior | Meaning |
+|--------------|---------|
+| **Solid White** | Menu navigation or system idle |
+| **Cycling Rainbow** | Active music playback (SD Mode) |
+| **Solid Purple** | Paused SD Card music playback |
+| **Solid Blue** | Bluetooth connected |
+| **Solid Red** | Bluetooth pairing mode (disconnected) |
+| **Custom Colors & Flashes** | Game feedback cues (e.g. Purple in Pong, Blue in Flappy, Green in Breakout; flashing on score/loss events) |
 
 ---
 
@@ -280,42 +324,58 @@ The project is structured as a PlatformIO C++ project with the following modules
 
 ```
 src/
-├── main.cpp          — Setup, loop, and page state machine
+├── main.cpp          — Setup, main loop, and global app mode state machine
 ├── bt/
 │   ├── bt.cpp         — Bluetooth A2DP sink mode (connect/stream/volume sync)
 │   └── bt.h
+├── controls/
+│   ├── controls.cpp   — Settings page rendering, item selection, and adjust handlers
+│   └── controls.h
 ├── display/
-│   ├── display.cpp    — OLED rendering (menus, SD screens, Bluetooth screen)
+│   ├── display.cpp    — SSD1306 OLED rendering (menus, playback screens, dialogs)
 │   └── display.h
+├── games/
+│   ├── games.cpp      — Engines, rendering, and logic for Pong, Flappy Bird, and Breakout
+│   └── games.h
 ├── globals/
-│   ├── globals.cpp    — Shared state definitions (pins, display, volume, etc.)
-│   └── globals.h      — Shared state declarations
+│   ├── globals.cpp    — Shared hardware pin mapping, display instances, state flags
+│   ├── globals.h
+│   ├── settings.cpp   — EEPROM/Preferences wrapper to save/load settings to ESP32 Flash
+│   └── settings.h
 ├── helpers/
-│   ├── helpers.cpp    — Rotary + small helpers
+│   ├── helpers.cpp    — Rotary encoder decoding and button helpers
 │   └── helpers.h
+├── rgb/
+│   ├── rgb.cpp        — RGB LED color controls, gamma levels, and rainbow animations
+│   └── rgb.h
+├── screensaver/
+│   ├── screensaver.cpp— Matrix digital rain, DVD logo bounce, and Oscilloscope routines
+│   └── screensaver.h
 ├── sd/
-│   ├── sdAudio.cpp    — SD audio playback plumbing
+│   ├── sdAudio.cpp    — SD audio playback pipeline (I2S decoding, task setups)
 │   ├── sdAudio.h
-│   ├── sdGlobals.cpp  — SD-related shared state
+│   ├── sdGlobals.cpp  — SD audio playback variables
 │   ├── sdGlobals.h
-│   ├── sdMenu.cpp     — SD file browser UI logic
+│   ├── sdMenu.cpp     — SD file browser menu drawing and logic
 │   ├── sdMenu.h
-│   ├── sdState.cpp    — SD mode state machine
+│   ├── sdState.cpp    — SD mode execution flow, sorting logic, and state machine
 │   └── sdState.h
 └── scrollText/
-    ├── scrollText.cpp — Scrolling text animation helpers
+    ├── scrollText.cpp — Scrolling text animation helpers for long titles
     └── scrollText.h
 ```
 
 ### Key Implementation Details
 
-- **FreeRTOS audio task** — Audio decoding runs on Core 0 via `xTaskCreatePinnedToCore`, keeping the UI responsive on Core 1
-- **Pause/Resume** — Saves the byte position in the file (`source->getPos()`) and seeks back on resume
-- **Song length** — Parsed directly from WAV headers (`fmt`/`data` chunks) and MP3 Xing/Info VBR headers, with a 128kbps CBR fallback
-- **Scrolling display** — Long filenames and directory paths scroll automatically on the OLED
-- **Bounce2 debouncing** — All buttons use hardware debouncing via the Bounce2 library
-- **Bluetooth A2DP sink** — Bluetooth audio is handled in `bt/` using `ESP32-A2DP` with queued I2S output
-- **Phone volume sync** — When the connected device changes volume, AVRCP volume change callbacks update the ESP32 `volume` value and refresh the UI
+- **FreeRTOS audio task** — Audio decoding runs on Core 0 via `xTaskCreatePinnedToCore`, keeping the UI rendering and button scanning responsive on Core 1.
+- **Persistent Memory (NVS)** — Utilizes the ESP32 `Preferences` library to write settings (brightness, volumes, sorting) directly to non-volatile flash memory.
+- **Custom Screen Refresh** — Screensavers and games bypass standard polling loops to perform high-frequency rendering routines directly.
+- **Pause/Resume** — Saves the byte position in the file (`source->getPos()`) and seeks back on resume.
+- **Song length** — Parsed directly from WAV headers (`fmt`/`data` chunks) and MP3 Xing/Info VBR headers, with a 128kbps CBR fallback.
+- **Scrolling display** — Long filenames and directory paths scroll automatically on the OLED.
+- **Bounce2 debouncing** — All buttons use hardware debouncing via the Bounce2 library.
+- **Bluetooth A2DP sink** — Bluetooth audio is handled in `bt/` using `ESP32-A2DP` with queued I2S output.
+- **Phone volume sync** — When the connected device changes volume, AVRCP volume change callbacks update the ESP32 `volume` value and refresh the UI.
 
 ### Libraries Used
 
@@ -353,7 +413,7 @@ Contributions are what make the open-source community such an amazing place! Any
 - 🔋 Battery power support with charge level indicator
 - 🔀 Shuffle and repeat modes
 - 💾 Remember last played file across reboots
-- 🌈 LED visualizer synced to audio
+- 🌈 Expanded LED visualizer synced to audio frequency
 - 📖 Multi-language filename support
 
 ---
@@ -393,13 +453,16 @@ Want to see your name here? Check out the [Contributing](#-contributing) section
 
 ### OLED display not working
 - Verify I2C address is `0x3C` (run an I2C scanner sketch to confirm)
-- If I2C address is not `0x3C`, change the value of DISPLAY_ADDRESS found near the end of [globals.cpp](src/globals/globals.cpp)
+- If I2C address is not `0x3C`, change the value of DISPLAY_ADDRESS found near the end of [globals.cpp](file:///home/himc29/Projects/Projects/electronics/embedded/hc-soundbox/hc-soundbox/src/globals/globals.cpp)
 - Check SDA/SCL connections to GPIO 21/22
 
 ### SD card not detected
 - Ensure the card is formatted as **FAT32**
 - Check SPI wiring (CS → GPIO 5)
 - Try a different SD card or re-seat the card
+
+### Settings are corrupted or behaving weirdly
+- Enter **Settings** in the System Menu and choose **Restore Defaults**. This resets all configurations stored in the Preferences (NVS) memory block.
 
 ### Songs not advancing automatically
 - Check Serial Monitor for error messages from the audio task
@@ -409,7 +472,7 @@ Want to see your name here? Check out the [Contributing](#-contributing) section
 
 ## 📄 License
 
-Distributed under the GNU GPL v3 License. See [LICENSE](LICENSE) for more information.
+Distributed under the GNU GPL v3 License. See [LICENSE](file:///home/himc29/Projects/Projects/electronics/embedded/hc-soundbox/hc-soundbox/LICENSE) for more information.
 
 **TL;DR:** You can use, modify, and distribute this project freely. Just keep the original license notice and make your modified code open source.
 
