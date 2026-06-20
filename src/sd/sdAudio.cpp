@@ -43,9 +43,26 @@ unsigned long getWAVLength(File file) {
 }
 
 unsigned long getMP3Length(File file) {
-    uint8_t header[200];
+    uint32_t offset = 0;
+    uint8_t id3Header[10];
     file.seek(0);
-    size_t bytesRead = file.read(header, 200);
+    if (file.read(id3Header, 10) == 10) {
+        if (memcmp(id3Header, "ID3", 3) == 0) {
+            uint32_t tagSize = ((uint32_t)(id3Header[6] & 0x7F) << 21) |
+                               ((uint32_t)(id3Header[7] & 0x7F) << 14) |
+                               ((uint32_t)(id3Header[8] & 0x7F) << 7)  |
+                               ((uint32_t)(id3Header[9] & 0x7F));
+            offset = 10 + tagSize;
+            if (id3Header[5] & 0x10) { // Has footer (adds 10 bytes at the end of the tag)
+                offset += 10;
+            }
+        }
+    }
+
+    // Read 1000 bytes after the ID3v2 tag
+    uint8_t header[1000];
+    file.seek(offset);
+    size_t bytesRead = file.read(header, 1000);
     if (bytesRead < 32) return 0;
 
     for(int i = 0; i < (int)(bytesRead - 16); i++) {
@@ -60,10 +77,26 @@ unsigned long getMP3Length(File file) {
             float duration = ((float)frames * 1152.0) / (float)sampleRate;
             return (unsigned long)(duration * 1000.0);
         }
+        else if(memcmp(&header[i], "VBRI", 4) == 0) {
+            uint32_t frames = ((uint32_t)header[i+14] << 24) | 
+                              ((uint32_t)header[i+15] << 16) | 
+                              ((uint32_t)header[i+16] << 8) | 
+                              header[i+17];
+            
+            uint32_t sampleRate = parseMP3SampleRate(header, bytesRead);
+            
+            float duration = ((float)frames * 1152.0) / (float)sampleRate;
+            return (unsigned long)(duration * 1000.0);
+        }
+    }
+
+    uint32_t audioSize = file.size();
+    if(audioSize > offset) {
+        audioSize -= offset;
     }
 
     uint32_t cbrBitrate = parseMP3Bitrate(header, bytesRead);
-    return (unsigned long)((file.size() * 8.0) / (float)cbrBitrate * 1000.0);
+    return (unsigned long)((audioSize * 8.0) / (float)cbrBitrate * 1000.0);
 }
 
 
