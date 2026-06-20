@@ -59,3 +59,24 @@ apply_patch(
     'uint32_t AudioFileSourceSD::read(void *data, uint32_t len) {\n    uint32_t bytesRead = f.read(reinterpret_cast<uint8_t*>(data), len);\n    if(bytesRead == 0 && len > 0) {\n        if(output) output->SetGain(0);\n        sdCardRemoved = true;\n        stopAudio = true;\n    }\n    return bytesRead;\n}',
     "AudioFileSourceSD.cpp - zero gain on read failure"
 )
+
+# --- Patch 3: AudioOutputI2S.cpp - return false from ConsumeSample if audioPaused ---
+audio_out = os.path.join(
+    env.subst("$PROJECT_LIBDEPS_DIR"),
+    env.subst("$PIOENV"),
+    "ESP8266Audio", "src", "AudioOutputI2S.cpp"
+)
+
+apply_patch(
+    audio_out,
+    'bool AudioOutputI2S::ConsumeSample(int16_t sample[2]) {',
+    'bool AudioOutputI2S::ConsumeSample(int16_t sample[2]) {\n    extern volatile bool audioPaused;\n    if (audioPaused) {\n        return false;\n    }',
+    "AudioOutputI2S.cpp - check audioPaused in ConsumeSample"
+)
+
+apply_patch(
+    audio_out,
+    '    chan_cfg.dma_frame_num = _bufferWords;\n    assert(ESP_OK == i2s_new_channel(&chan_cfg, &_tx_handle, nullptr));',
+    '    chan_cfg.dma_frame_num = _bufferWords;\n    chan_cfg.auto_clear = true;\n    assert(ESP_OK == i2s_new_channel(&chan_cfg, &_tx_handle, nullptr));',
+    "AudioOutputI2S.cpp - enable auto_clear in chan_cfg"
+)

@@ -11,4 +11,5 @@ bool userStopped = false;
 TaskHandle_t audioTaskHandle = NULL;
 volatile bool stopAudio = false;
 volatile bool sdCardRemoved = false;
+volatile bool audioPaused = false;
 String currentDir = "/";

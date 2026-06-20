@@ -127,6 +127,7 @@ void handlePlayingPage() {
         userStopped = true;
         stopAudio = true;
         songInfo.paused = false; // ensure task loop unblocks and terminates
+        audioPaused = false;
         if(output) output->stop(); // Force I2S output to stop so WAV decoder loop unblocks
     }
 

@@ -35,4 +35,5 @@ extern bool userStopped;
 extern TaskHandle_t audioTaskHandle;
 extern volatile bool stopAudio;
 extern volatile bool sdCardRemoved;
+extern volatile bool audioPaused;
 extern String currentDir;

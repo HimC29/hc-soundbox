@@ -114,10 +114,12 @@ void audioTask(void* param) {
     if(!sdCardRemoved) output->SetGain(volume / 100.0);
     stopAudio = true;
     audioTaskHandle = NULL;
+    audioPaused = false;
     vTaskDelete(NULL);
 }
 
 void handleStartSong(String fileLocation, String fileName, String type) {
+    audioPaused = false;
     songInfo.length = getAudioLength(fileLocation);
     source = new AudioFileSourceSD(fileLocation.c_str());
 
@@ -148,6 +150,7 @@ void handleStartSong(String fileLocation, String fileName, String type) {
 
 void handlePause() {
     songInfo.paused = true;
+    audioPaused = true;
     songInfo.pausedAt = millis() - songInfo.startTime;
     if(output) output->SetGain(0);
 }
@@ -155,5 +158,6 @@ void handlePause() {
 void handleResume() {
     if(output) output->SetGain(volume / 100.0);
     songInfo.startTime = millis() - songInfo.pausedAt;
+    audioPaused = false;
     songInfo.paused = false;
 }
