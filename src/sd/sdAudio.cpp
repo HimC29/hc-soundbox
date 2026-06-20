@@ -45,18 +45,27 @@ unsigned long getWAVLength(File file) {
 unsigned long getMP3Length(File file) {
     uint8_t header[200];
     file.seek(0);
-    file.read(header, 200);
+    size_t bytesRead = file.read(header, 200);
+    if (bytesRead < 32) return 0;
 
-    for(int i = 0; i < 196; i++) {
+    for(int i = 0; i < (int)(bytesRead - 16); i++) {
         if(memcmp(&header[i], "Xing", 4) == 0 || memcmp(&header[i], "Info", 4) == 0) {
-            uint32_t frames = (header[i+8] << 24) | (header[i+9] << 16) | (header[i+10] << 8) | header[i+11];
-            float duration = (frames * 1152.0) / 44100.0;
-            return (unsigned long)(duration * 1000);
+            uint32_t frames = ((uint32_t)header[i+8] << 24) | 
+                              ((uint32_t)header[i+9] << 16) | 
+                              ((uint32_t)header[i+10] << 8) | 
+                              header[i+11];
+            
+            uint32_t sampleRate = parseMP3SampleRate(header, bytesRead);
+            
+            float duration = ((float)frames * 1152.0) / (float)sampleRate;
+            return (unsigned long)(duration * 1000.0);
         }
     }
 
-    return (unsigned long)((file.size() * 8.0) / 128000.0 * 1000);
+    uint32_t cbrBitrate = parseMP3Bitrate(header, bytesRead);
+    return (unsigned long)((file.size() * 8.0) / (float)cbrBitrate * 1000.0);
 }
+
 
 unsigned long getAudioLength(String fileLocation) {
     File file = SD.open(fileLocation);

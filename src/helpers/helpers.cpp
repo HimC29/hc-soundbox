@@ -28,6 +28,45 @@ String getFileFormat(String filename) {
     return filename.substring(dotIndex + 1);
 }
 
+// Parses an MP3 header buffer to find the sample rate
+uint32_t parseMP3SampleRate(uint8_t* buffer, size_t bufferSize) {
+    for (size_t i = 0; i < bufferSize - 4; i++) {
+        // Look for the MP3 Sync Word (11 bits set to 1: 0xFF and top 3 bits of next byte)
+        if (buffer[i] == 0xFF && (buffer[i+1] & 0xE0) == 0xE0) {
+            uint8_t mpegVersion = (buffer[i+1] >> 3) & 0x03; // 3 = MPEG v1, 2 = MPEG v2
+            uint8_t sampleRateIdx = (buffer[i+2] >> 2) & 0x03;
+            
+            if (mpegVersion == 3) { // MPEG 1
+                if (sampleRateIdx == 0) return 44100;
+                if (sampleRateIdx == 1) return 48000;
+                if (sampleRateIdx == 2) return 32000;
+            } else if (mpegVersion == 2) { // MPEG 2
+                if (sampleRateIdx == 0) return 22050;
+                if (sampleRateIdx == 1) return 24000;
+                if (sampleRateIdx == 2) return 16000;
+            }
+            break; // Found sync but unknown version setup
+        }
+    }
+    return 44100; // Standard robust default fallback
+}
+
+// Parses an MP3 header buffer to find the CBR bitrate
+uint32_t parseMP3Bitrate(uint8_t* buffer, size_t bufferSize) {
+    for (size_t i = 0; i < bufferSize - 4; i++) {
+        if (buffer[i] == 0xFF && (buffer[i+1] & 0xE0) == 0xE0) {
+            uint8_t bitrateIdx = (buffer[i+2] >> 4) & 0x0F;
+            const uint32_t bitrates[] = {0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 
+                                         112000, 128000, 160000, 192000, 224000, 256000, 320000, 0};
+            if (bitrateIdx > 0 && bitrateIdx < 15) {
+                return bitrates[bitrateIdx];
+            }
+            break;
+        }
+    }
+    return 128000; // Safe baseline fallback
+}
+
 #define SD_CS 5
 
 // Loops until SD can init also shows message to user to insert sd card
@@ -40,13 +79,9 @@ void awaitSdInit() {
     }
 }
 
-// Like awaitSdInit(), but lets user cancel with Back button.
-// Returns true when SD is initialized, false when cancelled.
 bool awaitSdInitOrBack() {
     SD.end();
 
-    // IMPORTANT: SD.begin() can block long enough to miss a quick tap.
-    // We also watch a latched flag set by an interrupt so "tap Back" is reliable.
     backBtnLatched = false;
 
     while(true) {
