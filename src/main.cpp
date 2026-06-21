@@ -10,6 +10,7 @@
 #include "helpers/helpers.h"
 #include "sd/sdState.h"
 #include "sd/sdMenu.h"
+#include "sd/sdAudio.h"
 #include "bt/bt.h"
 #include "rgb/rgb.h"
 
@@ -102,6 +103,7 @@ void handleSystemMenuSelect() {
             case 1:
                 appMode = MODE_BLUETOOTH;
                 volume = Settings::defaultBtVol;
+                stopSong();
                 releaseSdAudioOutput();
                 startBluetoothMode(bluetoothName);
                 break;
