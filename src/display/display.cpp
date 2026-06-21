@@ -127,7 +127,8 @@ void drawMenu(String title,
 }
 
 void drawFileMenu() {
-    int fileCount = dirContents.fileCount;
+    bool hasNowPlaying = (songInfo.format != "");
+    int fileCount = dirContents.fileCount + (hasNowPlaying ? 1 : 0);
     int scrollOffset = menuState.scrollOffset;
     int selectedIndex = menuState.selectedIndex;
 
@@ -138,6 +139,13 @@ void drawFileMenu() {
     String visibleItems[maxViewableItems];
     for(int i = 0; i < visibleCount; i++) {
         int idx = scrollOffset + i;
+        if(hasNowPlaying) {
+            if(idx == 0) {
+                visibleItems[i] = "* Now Playing *";
+                continue;
+            }
+            idx--;
+        }
         if(dirContents.isDir[idx]) {
             visibleItems[i] = "> " + dirContents.fileNames[idx];
         }
@@ -155,6 +163,7 @@ void drawFileMenu() {
 }
 
 void updateSelectedItemDisplay() {
+    bool hasNowPlaying = (songInfo.format != "");
     int i = menuState.selectedIndex - menuState.scrollOffset;
     uint8_t y = 9 + (i * pxPerLn);
     
@@ -162,9 +171,24 @@ void updateSelectedItemDisplay() {
     display.setTextColor(SSD1306_BLACK);  // black text on white bg
     display.setCursor(marginLeft, y + marginTop);
     
-    String item = dirContents.isDir[menuState.selectedIndex] 
-        ? "> " + dirContents.fileNames[menuState.selectedIndex]
-        : dirContents.fileNames[menuState.selectedIndex];
+    String item;
+    int idx = menuState.selectedIndex;
+    if(hasNowPlaying) {
+        if(idx == 0) {
+            item = "* Now Playing *";
+        }
+        else {
+            idx--;
+            item = dirContents.isDir[idx] 
+                ? "> " + dirContents.fileNames[idx]
+                : dirContents.fileNames[idx];
+        }
+    }
+    else {
+        item = dirContents.isDir[idx] 
+            ? "> " + dirContents.fileNames[idx]
+            : dirContents.fileNames[idx];
+    }
     
     if(item.length() > maxLenOfItems) {
         updateScroll(selectedScroll, item, 200);
@@ -175,6 +199,7 @@ void updateSelectedItemDisplay() {
     }
     display.display();
 }
+
 
 void updateDirDisplay() {
     display.fillRect(0, 0, SCREEN_WIDTH, 9, SSD1306_BLACK);
@@ -233,23 +258,31 @@ void updateVolumeDisplay() {
 }
 
 void updateProgressBar() {
-    display.drawFastHLine(progressBarX, progressBarY, progressBarLength, SSD1306_WHITE);
-    display.fillCircle(
-        map(
-            min(millis() - songInfo.startTime, songInfo.length),
-            0,
-            songInfo.length,
-            progressBarX,
-            progressBarX + progressBarLength
-        ),
-        progressBarY, 2, SSD1306_WHITE
+    unsigned long elapsed = songInfo.paused ? songInfo.pausedAt : (millis() - songInfo.startTime);
+    int px = map(
+        min(elapsed, songInfo.length),
+        0,
+        songInfo.length,
+        progressBarX,
+        progressBarX + progressBarLength
     );
 
+    // Clear the progress bar strip first to erase old circles/trail
+    display.fillRect(progressBarX - 2, progressBarY - 2, progressBarLength + 5, 5, SSD1306_BLACK);
+
+    // Redraw the bar line
+    display.drawFastHLine(progressBarX, progressBarY, progressBarLength, SSD1306_WHITE);
+
+    // Draw the new circle indicator
+    display.fillCircle(px, progressBarY, 2, SSD1306_WHITE);
+
+    // Clear the time display text area
     display.fillRect(0, progressBarY + 7, SCREEN_WIDTH / 3, 8, SSD1306_BLACK);
 
     display.setCursor(6, progressBarY + 7);
-    display.print(millisToMinSec(millis() - songInfo.startTime));
+    display.print(millisToMinSec(elapsed));
 }
+
 
 void updateLengthDisplay() {
     display.fillRect(SCREEN_WIDTH - 30, progressBarY + 7, 30, 8, SSD1306_BLACK);

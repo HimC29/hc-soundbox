@@ -119,6 +119,8 @@ unsigned long getAudioLength(String fileLocation) {
 }
 
 void audioTask(void* param) {
+    Serial.printf("[DBG] audioTask START fmt=%s stopAudio=%d userStopped=%d paused=%d\n",
+        songInfo.format.c_str(), (int)stopAudio, (int)userStopped, (int)songInfo.paused);
     bool running = true;
     while(running && !stopAudio) {
         if(songInfo.paused) {
@@ -131,33 +133,60 @@ void audioTask(void* param) {
         if(songInfo.format == "mp3") running = mp3Decoder->loop();
         else running = wavDecoder->loop();
         if(!running && !stopAudio && !userStopped) {
-            // Decoder stopped on its own without user requesting it.
-            // This means the SD card was pulled or a read error occurred.
-            // Silence output immediately before the task cleanup to stop glitching.
-            output->SetGain(0);
-            sdCardRemoved = true;
+            Serial.printf("[DBG] audioTask: decoder loop() returned false (natural EOF). sdCardRemoved=%d\n", (int)sdCardRemoved);
+            if(output) output->SetGain(0);
             stopAudio = true;
         }
         vTaskDelay(1);
     }
+
+    Serial.printf("[DBG] audioTask EXIT loop. running=%d stopAudio=%d userStopped=%d sdCardRemoved=%d\n",
+        (int)running, (int)stopAudio, (int)userStopped, (int)sdCardRemoved);
+
+    // Mute output immediately.
     if(output) output->SetGain(0);
-    if(songInfo.format == "mp3") { mp3Decoder->stop(); delete mp3Decoder; }
-    else { wavDecoder->stop(); delete wavDecoder; }
-    delete source;
-    if(!sdCardRemoved) output->SetGain(volume / 100.0);
+
+    // IMPORTANT: Do NOT call mp3Decoder->stop() / wavDecoder->stop() here.
+    if(output && !userStopped) output->flush();
+    Serial.println("[DBG] audioTask: flush done");
+
+    if(songInfo.format == "mp3") { delete mp3Decoder; mp3Decoder = nullptr; }
+    else                         { delete wavDecoder;  wavDecoder  = nullptr; }
+    delete source; source = nullptr;
+    Serial.println("[DBG] audioTask: decoders deleted");
+
+    if(!sdCardRemoved && output) output->SetGain(volume / 100.0);
+
     stopAudio = true;
     audioTaskHandle = NULL;
     audioPaused = false;
+    Serial.printf("[DBG] audioTask: set audioTaskHandle=NULL stopAudio=true. About to vTaskDelete.\n");
     vTaskDelete(NULL);
 }
 
-void handleStartSong(String fileLocation, String fileName, String type) {
+void handleStartSong(String fileLocation, String fileName, String type, bool showPlayingPage) {
+    startingSong = true; // Block checkAudioStatus from re-entering during stopSong() wait
+    Serial.printf("[DBG] handleStartSong ENTER file=%s type=%s showPage=%d\n",
+        fileLocation.c_str(), type.c_str(), (int)showPlayingPage);
+    stopSong(); // Stop currently playing song first (no-op if already stopped)
+    // stopSong() sets userStopped=true internally so the audio task exits cleanly.
+    // Clear it now — from this point forward we're starting a NEW song, not
+    // responding to a user stop. Leaving it set would cause the next
+    // checkAudioStatus() to take the userStopped branch instead of auto-advancing.
+    userStopped = false;
+    Serial.printf("[DBG] handleStartSong: after stopSong. audioTaskHandle=%p userStopped=%d\n",
+        (void*)audioTaskHandle, (int)userStopped);
+
     audioPaused = false;
+    songInfo.paused = false; // Always start the new song unpaused
     songInfo.length = getAudioLength(fileLocation);
     source = new AudioFileSourceSD(fileLocation.c_str());
 
     if(type == "mp3") {
         mp3Decoder = new AudioGeneratorMP3();
+        // begin() calls output->begin(). Because we no longer call output->stop()
+        // between songs, i2sOn is still true and begin() will just reconfigure
+        // the sample rate via SetRate() without destroying/recreating the channel.
         mp3Decoder->begin(source, output);
         songInfo.format = "mp3";
     }
@@ -175,10 +204,22 @@ void handleStartSong(String fileLocation, String fileName, String type) {
     songInfo.fileLocation = fileLocation;
     songInfo.startTime = millis();
     stopAudio = false;
+    // Only force the playing page if explicitly requested (user picked a song).
+    // Auto-advance passes sdShowingPlayingPage so the user stays in the file
+    // browser / system menu / games without being interrupted.
+    if(showPlayingPage) {
+        sdShowingPlayingPage = true;
+    }
+
     xTaskCreatePinnedToCore(audioTask, "audioTask", 8192, NULL, 1, &audioTaskHandle, 0);
-    drawPlayingPage();
-    updateLengthDisplay();
-    display.display();
+    if (appMode == MODE_SD && sdShowingPlayingPage) {
+        drawPlayingPage();
+        updateLengthDisplay();
+        updateProgressBar();
+        drawPauseBtn();
+        display.display();
+    }
+    startingSong = false; // Allow checkAudioStatus to act again
 }
 
 void handlePause() {
@@ -194,3 +235,23 @@ void handleResume() {
     audioPaused = false;
     songInfo.paused = false;
 }
+
+void stopSong() {
+    if (audioTaskHandle != NULL) {
+        userStopped = true;
+        stopAudio = true;
+        songInfo.paused = false;
+        // Use audioPaused to make ConsumeSample() return false immediately,
+        // unblocking the audio task on Core 0 without calling output->stop()
+        // cross-core (which can corrupt the I2S driver and cause crashes).
+        audioPaused = true;
+        
+        // Wait for task to exit and clean itself up (with timeout for safety)
+        unsigned long deadline = millis() + 3000;
+        while (audioTaskHandle != NULL && millis() < deadline) {
+            delay(10);
+        }
+        // audioPaused is reset to false inside the audio task before vTaskDelete
+    }
+}
+

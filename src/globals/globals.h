@@ -6,6 +6,10 @@
 
 extern AudioOutputI2S* output;
 
+enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH, MODE_SCREENSAVER, MODE_GAMES, MODE_CONTROLS };
+extern AppMode appMode;
+
+
 struct MenuState {
     int selectedIndex;
     int scrollOffset;

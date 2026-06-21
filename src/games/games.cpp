@@ -4,6 +4,10 @@
 #include "../helpers/helpers.h"
 #include "../rgb/rgb.h"
 #include "../sd/sdState.h"
+#include "../sd/sdGlobals.h"
+#include "../sd/sdAudio.h"
+#include "../globals/settings.h"
+
 
 enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT };
 static GameState currentGameState = STATE_MENU;
@@ -632,6 +636,10 @@ void initGames() {
     drawMenu("Games Menu", gamesItems, gamesItemCount, gamesMenuState.selectedIndex, gamesMenuState.scrollOffset, selectedScroll);
 }
 
+static bool gameMediaMenuOpen = false;
+static unsigned long swPressStart = 0;
+static unsigned long lastMediaPressTime = 0;
+
 bool handleGamesMode() {
     if (currentGameState == STATE_MENU) {
         int rotaryReadings = readRotary();
@@ -645,6 +653,8 @@ bool handleGamesMode() {
             if (gamesMenuState.selectedIndex == 0) {
                 currentGameState = STATE_PONG;
                 backBtnLatched = false;
+                gameMediaMenuOpen = false;
+                swPressStart = 0;
                 Pong::init();
                 Pong::draw();
                 setRgbPurple();
@@ -653,6 +663,8 @@ bool handleGamesMode() {
             else if (gamesMenuState.selectedIndex == 1) {
                 currentGameState = STATE_FLAPPY;
                 backBtnLatched = false;
+                gameMediaMenuOpen = false;
+                swPressStart = 0;
                 Flappy::init();
                 Flappy::draw();
                 setRgbBlue();
@@ -661,6 +673,8 @@ bool handleGamesMode() {
             else if (gamesMenuState.selectedIndex == 2) {
                 currentGameState = STATE_BREAKOUT;
                 backBtnLatched = false;
+                gameMediaMenuOpen = false;
+                swPressStart = 0;
                 Breakout::init();
                 Breakout::draw();
                 setRgbGreen();
@@ -677,6 +691,98 @@ bool handleGamesMode() {
             }
         }
     } else {
+        // Single update — call update() once and reuse the result everywhere.
+        // Previously update() was called at three different places, causing the
+        // second and third pressed() checks to always return false because the
+        // HIGH->LOW transition was already consumed by the first call.
+        swRotary.update();
+        bool swPressed = swRotary.pressed();
+        int rotaryDir = readRotary();
+
+        // Long-press detection: track when button first goes down.
+        if (swPressed) {
+            swPressStart = millis();
+        }
+        if (digitalRead(swPin) == LOW && swPressStart > 0) {
+            if (millis() - swPressStart >= 1000) {
+                gameMediaMenuOpen = true;
+                swPressStart = 0;
+                // Don't pass this press down to the game or media menu.
+                swPressed = false;
+            }
+        }
+        if (digitalRead(swPin) == HIGH) {
+            swPressStart = 0;
+        }
+
+        if (gameMediaMenuOpen) {
+            if (rotaryDir != 0) {
+                volume = constrain(volume + rotaryDir * Settings::volumeStep, 0, 100);
+                if (output) output->SetGain(volume / 100.0);
+            }
+
+            if (swPressed) {
+                unsigned long now = millis();
+                if (now - lastMediaPressTime < 350) {
+                    // Double click: skip song
+                    if (songInfo.format != "") {
+                        stopAudio = true;
+                        songInfo.paused = false;
+                        audioPaused = true;
+                    }
+                } else {
+                    // Toggle play/pause
+                    if (songInfo.format != "") {
+                        if (songInfo.paused) {
+                            handleResume();
+                        } else {
+                            handlePause();
+                        }
+                    }
+                }
+                lastMediaPressTime = now;
+            }
+
+            backBtn.update();
+            if (backBtn.pressed() || backBtnLatched) {
+                backBtnLatched = false;
+                gameMediaMenuOpen = false;
+            }
+
+            // Draw overlay
+            display.clearDisplay();
+            display.setTextSize(1);
+            display.setTextColor(SSD1306_WHITE);
+            display.drawRoundRect(10, 5, 108, 54, 4, SSD1306_WHITE);
+            display.fillRect(11, 6, 106, 52, SSD1306_BLACK);
+
+            display.setCursor(18, 11);
+            display.print("- MUSIC QUICK MENU -");
+
+            display.setCursor(16, 25);
+            if (songInfo.format != "") {
+                String sName = songInfo.name;
+                if (sName.length() > 15) sName = sName.substring(0, 12) + "...";
+                display.print(sName);
+            } else {
+                display.print("[No Song Playing]");
+            }
+
+            display.setCursor(16, 37);
+            display.print("Volume: ");
+            display.print(volume);
+            display.print("%");
+
+            display.setCursor(16, 49);
+            if (songInfo.format != "") {
+                display.print(songInfo.paused ? "State: PAUSED" : "State: PLAYING");
+            } else {
+                display.print("Press Back to Game");
+            }
+            display.display();
+            return false;
+        }
+
         // Back button always exits game to menu
         backBtn.update();
         if (backBtn.pressed() || backBtnLatched) {
@@ -684,25 +790,23 @@ bool handleGamesMode() {
             if (millis() - lastTransitionTime >= 300) {
                 lastTransitionTime = millis();
                 setRgbRainbow(false);
+                gameMediaMenuOpen = false;
+                swPressStart = 0;
                 initGames();
             }
             return false;
         }
         
-        swRotary.update();
-        bool buttonPressed = swRotary.pressed();
-        int rotaryDir = readRotary();
-        
         if (currentGameState == STATE_PONG) {
-            Pong::update(rotaryDir, buttonPressed);
+            Pong::update(rotaryDir, swPressed);
             Pong::draw();
         }
         else if (currentGameState == STATE_FLAPPY) {
-            Flappy::update(rotaryDir, buttonPressed);
+            Flappy::update(rotaryDir, swPressed);
             Flappy::draw();
         }
         else if (currentGameState == STATE_BREAKOUT) {
-            Breakout::update(rotaryDir, buttonPressed);
+            Breakout::update(rotaryDir, swPressed);
             Breakout::draw();
         }
     }
@@ -711,3 +815,4 @@ bool handleGamesMode() {
     updateRgb();
     return false;
 }
+

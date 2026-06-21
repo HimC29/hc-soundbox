@@ -2,8 +2,10 @@
 #include <Wire.h>
 
 AudioOutputI2S* output = nullptr;
+AppMode appMode = MODE_SELECT;
 
 MenuState menuState = {0, 0};
+
 MenuState systemMenuState = {0, 0};
 
 ScrollState dirScroll = {0, 0};

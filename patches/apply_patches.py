@@ -56,8 +56,8 @@ apply_patch(
 apply_patch(
     audio_src,
     'uint32_t AudioFileSourceSD::read(void *data, uint32_t len) {\n    return f.read(reinterpret_cast<uint8_t*>(data), len);\n}',
-    'uint32_t AudioFileSourceSD::read(void *data, uint32_t len) {\n    uint32_t bytesRead = f.read(reinterpret_cast<uint8_t*>(data), len);\n    if(bytesRead == 0 && len > 0) {\n        if(output) output->SetGain(0);\n        sdCardRemoved = true;\n        stopAudio = true;\n    }\n    return bytesRead;\n}',
-    "AudioFileSourceSD.cpp - zero gain on read failure"
+    'uint32_t AudioFileSourceSD::read(void *data, uint32_t len) {\n    uint32_t bytesRead = f.read(reinterpret_cast<uint8_t*>(data), len);\n    if(bytesRead == 0 && len > 0) {\n        // Only treat as a real SD error if we\'re NOT at natural end-of-file.\n        // When f.position() >= f.size(), the song simply finished.\n        if(f && f.position() < f.size()) {\n            if(output) output->SetGain(0);\n            sdCardRemoved = true;\n        }\n        stopAudio = true;\n    }\n    return bytesRead;\n}',
+    "AudioFileSourceSD.cpp - EOF-aware error detection"
 )
 
 # --- Patch 3: AudioOutputI2S.cpp - return false from ConsumeSample if audioPaused ---
@@ -79,4 +79,16 @@ apply_patch(
     '    chan_cfg.dma_frame_num = _bufferWords;\n    assert(ESP_OK == i2s_new_channel(&chan_cfg, &_tx_handle, nullptr));',
     '    chan_cfg.dma_frame_num = _bufferWords;\n    chan_cfg.auto_clear = true;\n    assert(ESP_OK == i2s_new_channel(&chan_cfg, &_tx_handle, nullptr));',
     "AudioOutputI2S.cpp - enable auto_clear in chan_cfg"
+)
+
+# --- Patch 4: AudioOutputI2S.cpp - guard begin() so it's idempotent when i2sOn ---
+# Without this, every second song call to begin() (via AudioGeneratorMP3::begin ->
+# output->begin) would call i2s_new_channel() on a live handle, causing an ESP-IDF
+# assert panic. We keep the I2S channel alive across songs, so begin() must be a
+# no-op when already started.
+apply_patch(
+    audio_out,
+    'bool AudioOutputI2S::begin() {\n#ifdef ESP32\n    i2s_chan_config_t chan_cfg',
+    'bool AudioOutputI2S::begin() {\n#ifdef ESP32\n    // Guard: if the channel is already live (i2sOn), don\'t try to create a new\n    // one. Calling i2s_new_channel() twice on the same handle causes an\n    // ESP-IDF assert. We keep the I2S channel alive across song transitions\n    // so that decoders can call begin() freely without tearing down hardware.\n    if (i2sOn) {\n        SetRate(hertz ? hertz : 44100);\n        return true;\n    }\n    i2s_chan_config_t chan_cfg',
+    "AudioOutputI2S.cpp - idempotent begin() guard for i2sOn"
 )

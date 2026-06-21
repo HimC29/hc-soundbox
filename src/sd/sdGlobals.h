@@ -18,6 +18,7 @@ struct DirContents {
     std::vector<bool> isDir;
 };
 extern DirContents dirContents;
+extern DirContents playbackDirContents;
 
 struct SongInfo {
     String format;
@@ -37,3 +38,8 @@ extern volatile bool stopAudio;
 extern volatile bool sdCardRemoved;
 extern volatile bool audioPaused;
 extern String currentDir;
+extern String playbackDir;
+extern int playbackSelectedIndex;
+extern bool sdShowingPlayingPage;
+extern bool startingSong;
+

@@ -2,6 +2,10 @@
 #include "../globals/globals.h"
 #include "../helpers/helpers.h"
 #include "../rgb/rgb.h"
+#include "../sd/sdGlobals.h"
+#include "../sd/sdAudio.h"
+#include "../globals/settings.h"
+
 
 ScreensaverType currentScreensaver = SS_DVD;
 static unsigned long lastFrameTime = 0;
@@ -209,17 +213,95 @@ static void updateAndDrawOscilloscope() {
     }
 }
 
+static unsigned long overlayEndTime = 0;
+static String lastOverlaySongName = "";
+static int lastOverlayVolume = -1;
+static bool lastOverlayPaused = false;
+static unsigned long lastPressTime = 0;
+
+void drawScreensaverMusicOverlay() {
+    if (songInfo.format == "") return;
+
+    // Detect track change, volume change, or pause/resume change
+    if (songInfo.name != lastOverlaySongName || volume != lastOverlayVolume || songInfo.paused != lastOverlayPaused) {
+        overlayEndTime = millis() + 3000;
+        lastOverlaySongName = songInfo.name;
+        lastOverlayVolume = volume;
+        lastOverlayPaused = songInfo.paused;
+    }
+
+    if (millis() < overlayEndTime) {
+        // Draw a sleek black banner at the top
+        display.fillRect(0, 0, 128, 14, SSD1306_BLACK);
+        display.drawFastHLine(0, 14, 128, SSD1306_WHITE);
+
+        display.setTextSize(1);
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(4, 3);
+        
+        // Draw small note icon or state
+        if (songInfo.paused) {
+            display.print("|| ");
+        } else {
+            display.print("> ");
+        }
+        
+        // Draw truncated song name
+        String nameToShow = songInfo.name;
+        if (nameToShow.length() > 14) {
+            nameToShow = nameToShow.substring(0, 11) + "...";
+        }
+        display.print(nameToShow);
+
+        // Draw volume percentage
+        display.setCursor(94, 3);
+        display.print("V:");
+        display.print(volume);
+    }
+}
+
 bool handleScreensavers() {
     int rotaryReadings = readRotary();
     if (rotaryReadings != 0) {
-        if (rotaryReadings > 0) {
-            currentScreensaver = (ScreensaverType)((currentScreensaver + 1) % SS_COUNT);
-        } else if (rotaryReadings < 0) {
-            currentScreensaver = (ScreensaverType)((currentScreensaver - 1 + SS_COUNT) % SS_COUNT);
+        // Button held down (pin DT or button pin? The button pin is swPin!)
+        if (digitalRead(swPin) == LOW) {
+            if (songInfo.format != "") {
+                volume = constrain(volume + rotaryReadings * Settings::volumeStep, 0, 100);
+                if (output) output->SetGain(volume / 100.0);
+            }
+        } else {
+            if (rotaryReadings > 0) {
+                currentScreensaver = (ScreensaverType)((currentScreensaver + 1) % SS_COUNT);
+            } else if (rotaryReadings < 0) {
+                currentScreensaver = (ScreensaverType)((currentScreensaver - 1 + SS_COUNT) % SS_COUNT);
+            }
+            initActiveScreensaver();
         }
-        initActiveScreensaver();
     }
     
+    swRotary.update();
+    if (swRotary.pressed()) {
+        unsigned long now = millis();
+        if (now - lastPressTime < 350) {
+            // Double click: Skip song
+            if (songInfo.format != "") {
+                stopAudio = true;
+                songInfo.paused = false;
+                if(output) output->stop();
+            }
+        } else {
+            // Toggle play/pause
+            if (songInfo.format != "") {
+                if (songInfo.paused) {
+                    handleResume();
+                } else {
+                    handlePause();
+                }
+            }
+        }
+        lastPressTime = now;
+    }
+
     backBtn.update();
     if (backBtn.pressed() || backBtnLatched) {
         backBtnLatched = false;
@@ -245,7 +327,10 @@ bool handleScreensavers() {
                 break;
         }
         
+        drawScreensaverMusicOverlay();
+        
         display.display();
     }
     return false;
 }
+

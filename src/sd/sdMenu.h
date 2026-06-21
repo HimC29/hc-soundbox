@@ -4,3 +4,5 @@
 bool handleSongPicker();
 void handlePlayingPage();
 bool handleSdMode();
+void checkAudioStatus();
+

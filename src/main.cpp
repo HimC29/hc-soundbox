@@ -18,8 +18,8 @@
 #include "globals/settings.h"
 #include "controls/controls.h"
 
-enum AppMode { MODE_SELECT, MODE_SD, MODE_BLUETOOTH, MODE_SCREENSAVER, MODE_GAMES, MODE_CONTROLS };
-AppMode appMode = MODE_SELECT;
+
+
 
 String systemMenuItems[] = {"SD Card", "Bluetooth", "Screensavers", "Games", "Settings"};
 const int systemMenuItemCount = 5;
@@ -62,26 +62,42 @@ void handleSystemMenuSelect() {
 
     swRotary.update();
     if(swRotary.pressed()) {
+        backBtnLatched = false; // Clear any stale back button latch from the System Menu
         switch(systemMenuState.selectedIndex) {
             case 0:
                 appMode = MODE_SD;
-                volume = Settings::defaultSdVol;
-                initSdAudioOutput();
-                currentDir = "/";
-                while(true) {
-                    showInsertSdMessage();
-                    // Allow user to go back to the system menu while waiting for SD.
-                    if(!awaitSdInitOrBack()) {
-                        releaseSdAudioOutput();
-                        appMode = MODE_SELECT;
-                        drawSystemMenu();
-                        return;
+                if (songInfo.format != "") {
+                    // Song is already playing in the background - preserve state and draw the correct screen
+                    if (sdShowingPlayingPage) {
+                        drawPlayingPage();
+                        updateLengthDisplay();
+                        updateProgressBar();
+                        if (songInfo.paused) drawResumeBtn();
+                        else drawPauseBtn();
+                        display.display();
+                    } else {
+                        drawFileMenu();
                     }
-                    if(updateDirContents(currentDir.c_str())) break;
+                } else {
+                    // Fresh entry to SD mode - perform full initialization
+                    volume = Settings::defaultSdVol;
+                    initSdAudioOutput();
+                    currentDir = "/";
+                    while(true) {
+                        showInsertSdMessage();
+                        // Allow user to go back to the system menu while waiting for SD.
+                        if(!awaitSdInitOrBack()) {
+                            releaseSdAudioOutput();
+                            appMode = MODE_SELECT;
+                            drawSystemMenu();
+                            return;
+                        }
+                        if(updateDirContents(currentDir.c_str())) break;
+                    }
+                    menuState.selectedIndex = 0;
+                    menuState.scrollOffset = 0;
+                    drawFileMenu();
                 }
-                menuState.selectedIndex = 0;
-                menuState.scrollOffset = 0;
-                drawFileMenu();
                 break;
             case 1:
                 appMode = MODE_BLUETOOTH;
@@ -91,14 +107,19 @@ void handleSystemMenuSelect() {
                 break;
             case 2:
                 appMode = MODE_SCREENSAVER;
-                releaseSdAudioOutput();
+                if (songInfo.format == "") {
+                    releaseSdAudioOutput();
+                }
                 initScreensavers();
                 break;
             case 3:
                 appMode = MODE_GAMES;
-                releaseSdAudioOutput();
+                if (songInfo.format == "") {
+                    releaseSdAudioOutput();
+                }
                 initGames();
                 break;
+
             case 4:
                 appMode = MODE_CONTROLS;
                 initControlsMenu();
@@ -140,7 +161,9 @@ void setup() {
 }
 
 void loop() {
+    checkAudioStatus();
     switch(appMode) {
+
         case MODE_SELECT:
             setRgbWhite();
             handleSystemMenuSelect();
