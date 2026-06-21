@@ -9,12 +9,12 @@
 #include "../globals/settings.h"
 
 
-enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT };
+enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT, STATE_RACE };
 static GameState currentGameState = STATE_MENU;
 
 static MenuState gamesMenuState = {0, 0};
-static String gamesItems[] = {"Pong", "Flappy Bird", "Breakout"};
-static const int gamesItemCount = 3;
+static String gamesItems[] = {"Pong", "Flappy Bird", "Breakout", "Race"};
+static const int gamesItemCount = 4;
 
 static unsigned long rgbTimer = 0;
 
@@ -31,6 +31,8 @@ static void updateRgbTimer() {
             setRgbBlue();
         } else if (currentGameState == STATE_BREAKOUT) {
             setRgbGreen();
+        } else if (currentGameState == STATE_RACE) {
+            setRgbColor(255, 100, 0); // Orange for Race
         } else {
             setRgbWhite();
         }
@@ -627,6 +629,203 @@ namespace Breakout {
     }
 }
 
+namespace Race {
+    struct Enemy {
+        float x;
+        float y;
+        bool active;
+    };
+    
+    Enemy enemies[2];
+    float playerX;
+    const int playerY = 48;
+    const int playerW = 9;
+    const int playerH = 14;
+    
+    float roadOffset;
+    float speed;
+    float maxSpeed;
+    int score;
+    bool gameOver;
+    unsigned long lastUpdate;
+    unsigned long spawnTimer;
+    unsigned long lastScoreTime;
+    
+    void init() {
+        playerX = 64.0f - playerW / 2.0f;
+        roadOffset = 0.0f;
+        speed = 1.5f;
+        maxSpeed = 5.0f;
+        score = 0;
+        gameOver = false;
+        lastUpdate = millis();
+        spawnTimer = millis();
+        lastScoreTime = millis();
+        
+        for (int i = 0; i < 2; i++) {
+            enemies[i].active = false;
+        }
+    }
+    
+    bool checkCollision(float ax, float ay, float aw, float ah, float bx, float by, float bw, float bh) {
+        return (ax < bx + bw &&
+                ax + aw > bx &&
+                ay < by + bh &&
+                ay + ah > by);
+    }
+    
+    void drawCar(int x, int y, bool isPlayer) {
+        // Draw main body
+        display.fillRect(x + 2, y, 5, 14, SSD1306_WHITE);
+        // Draw wheels
+        display.fillRect(x, y + 2, 2, 3, SSD1306_WHITE);
+        display.fillRect(x + 7, y + 2, 2, 3, SSD1306_WHITE);
+        display.fillRect(x, y + 9, 2, 3, SSD1306_WHITE);
+        display.fillRect(x + 7, y + 9, 2, 3, SSD1306_WHITE);
+        // Draw spoiler (rear wing)
+        display.drawFastHLine(x, y + 13, 9, SSD1306_WHITE);
+        // Draw front wing
+        display.drawFastHLine(x + 1, y, 7, SSD1306_WHITE);
+        
+        if (!isPlayer) {
+            display.drawFastHLine(x + 2, y + 6, 5, SSD1306_BLACK); // distinct stripe for enemy
+        } else {
+            display.drawPixel(x + 4, y + 5, SSD1306_BLACK); // driver helmet
+        }
+    }
+    
+    void update(int rotaryDir, bool buttonPressed) {
+        if (gameOver) {
+            if (buttonPressed) {
+                init();
+                setRgbColor(255, 100, 0); // Orange
+            }
+            return;
+        }
+        
+        if (rotaryDir != 0) {
+            playerX += rotaryDir * 3.0f;
+            playerX = constrain(playerX, 25.0f, 104.0f - playerW);
+        }
+        
+        unsigned long now = millis();
+        if (now - lastUpdate >= 30) {
+            lastUpdate = now;
+            
+            roadOffset += speed;
+            
+            // Score and speed scaling
+            if (now - lastScoreTime >= 200) {
+                score++;
+                lastScoreTime = now;
+                if (score % 25 == 0 && speed < maxSpeed) {
+                    speed += 0.2f;
+                }
+            }
+            
+            // Move enemies
+            for (int i = 0; i < 2; i++) {
+                if (enemies[i].active) {
+                    enemies[i].y += speed + 0.8f;
+                    if (enemies[i].y > 64) {
+                        enemies[i].active = false;
+                    }
+                    
+                    // Collision check
+                    if (checkCollision(playerX, playerY, playerW, playerH, enemies[i].x, enemies[i].y, playerW, playerH)) {
+                        gameOver = true;
+                        triggerRgbFlash(255, 0, 0, 500); // Red flash
+                        break;
+                    }
+                }
+            }
+            
+            // Spawn enemies
+            if (!gameOver && now - spawnTimer >= 1500) {
+                for (int i = 0; i < 2; i++) {
+                    if (!enemies[i].active) {
+                        bool safeToSpawn = true;
+                        for (int j = 0; j < 2; j++) {
+                            if (enemies[j].active && enemies[j].y < 25) {
+                                safeToSpawn = false;
+                            }
+                        }
+                        if (safeToSpawn) {
+                            enemies[i].active = true;
+                            enemies[i].y = -14;
+                            int lane = random(0, 3);
+                            enemies[i].x = 34.0f + lane * 25.0f - playerW / 2.0f;
+                            spawnTimer = now;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    void draw() {
+        display.clearDisplay();
+        
+        if (gameOver) {
+            display.setTextSize(2);
+            display.setTextColor(SSD1306_WHITE);
+            display.setCursor(10, 10);
+            display.print("GAME OVER");
+            display.setTextSize(1);
+            display.setCursor(10, 35);
+            display.print("Score: ");
+            display.print(score);
+            display.setCursor(10, 48);
+            display.print("Press to restart");
+            display.display();
+            return;
+        }
+        
+        // Draw side lines / road borders
+        int offset = (int)roadOffset % 16;
+        for (int y = -16 + offset; y < 64; y += 16) {
+            display.drawFastVLine(24, y, 8, SSD1306_WHITE);
+            display.drawFastVLine(104, y, 8, SSD1306_WHITE);
+        }
+        
+        // Draw roadside scenery (posts)
+        int sceneryOffset = (int)roadOffset % 32;
+        for (int y = -32 + sceneryOffset; y < 64; y += 32) {
+            // Left scenery
+            display.drawFastVLine(10, y, 4, SSD1306_WHITE);
+            display.drawCircle(10, y, 2, SSD1306_WHITE);
+            // Right scenery
+            display.drawFastVLine(118, y, 4, SSD1306_WHITE);
+            display.drawCircle(118, y, 2, SSD1306_WHITE);
+        }
+        
+        // Draw player car
+        drawCar((int)playerX, playerY, true);
+        
+        // Draw enemy cars
+        for (int i = 0; i < 2; i++) {
+            if (enemies[i].active) {
+                drawCar((int)enemies[i].x, (int)enemies[i].y, false);
+            }
+        }
+        
+        // Draw HUD / Score
+        display.setTextColor(SSD1306_WHITE);
+        display.setTextSize(1);
+        display.setCursor(2, 2);
+        display.print("S:");
+        display.print(score);
+        
+        display.setCursor(102, 2);
+        display.print("MPH");
+        display.setCursor(82, 2);
+        display.print((int)(speed * 30));
+        
+        display.display();
+    }
+}
+
 static unsigned long lastTransitionTime = 0;
 
 void initGames() {
@@ -678,6 +877,16 @@ bool handleGamesMode() {
                 Breakout::init();
                 Breakout::draw();
                 setRgbGreen();
+                updateRgb();
+            }
+            else if (gamesMenuState.selectedIndex == 3) {
+                currentGameState = STATE_RACE;
+                backBtnLatched = false;
+                gameMediaMenuOpen = false;
+                swPressStart = 0;
+                Race::init();
+                Race::draw();
+                setRgbColor(255, 100, 0); // Orange
                 updateRgb();
             }
         }
@@ -808,6 +1017,10 @@ bool handleGamesMode() {
         else if (currentGameState == STATE_BREAKOUT) {
             Breakout::update(rotaryDir, swPressed);
             Breakout::draw();
+        }
+        else if (currentGameState == STATE_RACE) {
+            Race::update(rotaryDir, swPressed);
+            Race::draw();
         }
     }
     
