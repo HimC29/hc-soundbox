@@ -69,7 +69,7 @@ void showInsertSdMessage() {
     display.display();
 }
 
-void drawMenu(String title,
+void drawMenu(const String& title,
              String* items,
              int itemCount,
              int selectedIndex,

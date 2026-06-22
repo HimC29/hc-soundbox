@@ -37,15 +37,15 @@ void updateMenuState(MenuState& state, int itemCount, int rotaryDirection) {
     selectedScroll.offset = 0;
 }
 
-bool updateDirContents(const char* workingDirName) {
+bool readDirContents(const char* workingDirName, DirContents& dest) {
     File workingDir = SD.open(workingDirName);
 
     if(!workingDir) {
         return false;
     }
     
-    dirContents.fileNames.clear();
-    dirContents.isDir.clear();
+    dest.fileNames.clear();
+    dest.isDir.clear();
 
     struct DirEntry {
         String name;
@@ -72,11 +72,15 @@ bool updateDirContents(const char* workingDirName) {
     }
 
     for (const auto& entry : entries) {
-        dirContents.fileNames.push_back(entry.name);
-        dirContents.isDir.push_back(entry.isDir);
+        dest.fileNames.push_back(entry.name);
+        dest.isDir.push_back(entry.isDir);
     }
 
-    dirContents.fileCount = dirContents.fileNames.size();
+    dest.fileCount = dest.fileNames.size();
 
     return true;
+}
+
+bool updateDirContents(const char* workingDirName) {
+    return readDirContents(workingDirName, dirContents);
 }

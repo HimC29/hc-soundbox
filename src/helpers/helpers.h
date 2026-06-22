@@ -4,7 +4,7 @@
 #include "../globals/globals.h"
 
 String millisToMinSec(unsigned long milliseconds);
-String getFileFormat(String filename);
+String getFileFormat(const String& filename);
 uint32_t parseMP3SampleRate(uint8_t* buffer, size_t bufferSize);
 uint32_t parseMP3Bitrate(uint8_t* buffer, size_t bufferSize);
 void awaitSdInit();

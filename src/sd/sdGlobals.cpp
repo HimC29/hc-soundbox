@@ -5,7 +5,6 @@ AudioGeneratorMP3* mp3Decoder = nullptr;
 AudioGeneratorWAV* wavDecoder = nullptr;
 
 DirContents dirContents = {{}, 0, {}};
-DirContents playbackDirContents = {{}, 0, {}};
 SongInfo songInfo = {"", "", "", 0, 0, false, 0, 0};
 
 bool userStopped = false;

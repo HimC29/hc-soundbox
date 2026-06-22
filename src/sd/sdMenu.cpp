@@ -77,7 +77,6 @@ bool handleSongPicker() {
 
             if(fileFormat == "mp3" || fileFormat == "wav") {
                 playbackDir = currentDir;
-                playbackDirContents = dirContents;
                 playbackSelectedIndex = adjustedIndex;
                 handleStartSong(fileLocation, fileName, fileFormat);
                 return false;
@@ -211,8 +210,8 @@ void checkAudioStatus() {
         lastLog = millis();
     }
     if(audioTaskHandle == NULL && stopAudio && !songInfo.paused) {
-        Serial.printf("[DBG] checkAudioStatus TRIGGERED: userStopped=%d sdCardRemoved=%d playbackFileCount=%d playbackSelectedIdx=%d\n",
-            (int)userStopped, (int)sdCardRemoved, playbackDirContents.fileCount, playbackSelectedIndex);
+        Serial.printf("[DBG] checkAudioStatus TRIGGERED: userStopped=%d sdCardRemoved=%d playbackSelectedIdx=%d\n",
+            (int)userStopped, (int)sdCardRemoved, playbackSelectedIndex);
         songInfo.format = "";
         stopAudio = false;
 
@@ -237,20 +236,22 @@ void checkAudioStatus() {
             }
         }
         else {
-            Serial.printf("[DBG] checkAudioStatus: AUTO-ADVANCE branch. playbackFileCount=%d playbackSelectedIdx=%d\n",
-                playbackDirContents.fileCount, playbackSelectedIndex);
-            if (playbackDirContents.fileCount == 0) {
-                Serial.println("[DBG] checkAudioStatus: playbackDirContents.fileCount==0, cannot advance");
+            Serial.printf("[DBG] checkAudioStatus: AUTO-ADVANCE branch. playbackDir='%s' playbackSelectedIdx=%d\n",
+                playbackDir.c_str(), playbackSelectedIndex);
+
+            DirContents tempContents;
+            if (!readDirContents(playbackDir.c_str(), tempContents) || tempContents.fileCount == 0) {
+                Serial.println("[DBG] checkAudioStatus: failed to read playback directory or it is empty");
                 return;
             }
 
             // find next playable file using our robust loop
             int nextIndex = playbackSelectedIndex;
             bool found = false;
-            for (int attempt = 0; attempt < playbackDirContents.fileCount; attempt++) {
-                nextIndex = (nextIndex + 1) % playbackDirContents.fileCount;
-                if (!playbackDirContents.isDir[nextIndex]) {
-                    String fmt = getFileFormat(playbackDirContents.fileNames[nextIndex]);
+            for (int attempt = 0; attempt < tempContents.fileCount; attempt++) {
+                nextIndex = (nextIndex + 1) % tempContents.fileCount;
+                if (!tempContents.isDir[nextIndex]) {
+                    String fmt = getFileFormat(tempContents.fileNames[nextIndex]);
                     fmt.toLowerCase();
                     if (fmt == "mp3" || fmt == "wav") {
                         found = true;
@@ -265,7 +266,7 @@ void checkAudioStatus() {
                 return;
             }
 
-            String fileName = playbackDirContents.fileNames[playbackSelectedIndex];
+            String fileName = tempContents.fileNames[playbackSelectedIndex];
             String fileFormat = getFileFormat(fileName);
             fileFormat.toLowerCase();
 

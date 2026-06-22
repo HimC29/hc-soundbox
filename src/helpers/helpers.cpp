@@ -17,7 +17,7 @@ String millisToMinSec(unsigned long milliseconds) {
     return formatted;
 }
 
-String getFileFormat(String filename) {
+String getFileFormat(const String& filename) {
     int dotIndex = filename.lastIndexOf('.');
     
     // no dot found, or dot is the last character

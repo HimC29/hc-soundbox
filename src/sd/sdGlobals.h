@@ -18,7 +18,6 @@ struct DirContents {
     std::vector<bool> isDir;
 };
 extern DirContents dirContents;
-extern DirContents playbackDirContents;
 
 struct SongInfo {
     String format;

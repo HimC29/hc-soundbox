@@ -5,7 +5,7 @@
 #include "../helpers/helpers.h"
 #include "../display/display.h"
 
-unsigned long getWAVLength(File file) {
+unsigned long getWAVLength(File& file) {
     file.seek(12); // skip "riff" header
     
     while(file.available()) {
@@ -42,7 +42,7 @@ unsigned long getWAVLength(File file) {
     return 0;
 }
 
-unsigned long getMP3Length(File file) {
+unsigned long getMP3Length(File& file) {
     uint32_t offset = 0;
     uint8_t id3Header[10];
     file.seek(0);
@@ -100,7 +100,7 @@ unsigned long getMP3Length(File file) {
 }
 
 
-unsigned long getAudioLength(String fileLocation) {
+unsigned long getAudioLength(const String& fileLocation) {
     File file = SD.open(fileLocation);
     if(!file) return 0;
 
@@ -164,7 +164,7 @@ void audioTask(void* param) {
     vTaskDelete(NULL);
 }
 
-void handleStartSong(String fileLocation, String fileName, String type, bool showPlayingPage) {
+void handleStartSong(const String& fileLocation, const String& fileName, const String& type, bool showPlayingPage) {
     startingSong = true; // block checkaudiostatus while waiting for stopsong to finish
     Serial.printf("[DBG] handleStartSong ENTER file=%s type=%s showPage=%d\n",
         fileLocation.c_str(), type.c_str(), (int)showPlayingPage);

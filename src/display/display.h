@@ -7,7 +7,7 @@
 
 // display functions
 void showInsertSdMessage();
-void drawMenu(String title,
+void drawMenu(const String& title,
               String* items,
               int itemCount,
               int selectedIndex,
