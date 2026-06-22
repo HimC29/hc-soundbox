@@ -9,12 +9,12 @@
 #include "../globals/settings.h"
 
 
-enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT, STATE_TRAFFIC };
+enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT, STATE_TRAFFIC, STATE_REACTION };
 static GameState currentGameState = STATE_MENU;
 
 static MenuState gamesMenuState = {0, 0};
-static String gamesItems[] = {"Pong", "Flappy Bird", "Breakout", "Traffic Run"};
-static const int gamesItemCount = 4;
+static String gamesItems[] = {"Pong", "Flappy Bird", "Breakout", "Traffic Run", "Reaction Time"};
+static const int gamesItemCount = 5;
 
 static unsigned long rgbTimer = 0;
 
@@ -817,6 +817,103 @@ namespace TrafficRun {
     }
 }
 
+namespace ReactionTime {
+	enum State {
+		WAITING,
+		READY,
+		DONE
+	};
+
+	State state;
+
+	unsigned long startTime;
+	unsigned long waitTime;
+	unsigned long reactionTime;
+	bool falseStart;
+	unsigned long lastUpdate;
+	unsigned long waitStartTime;
+	
+    void init() {
+    	state = WAITING;
+    	waitTime = random(1000, 5000);
+    	waitStartTime = millis();
+    	falseStart = false;
+    	lastUpdate = millis();
+    }
+    
+    void update(int rotaryDir, bool buttonPressed) {
+        if (millis() - lastUpdate < 20) return;
+        lastUpdate = millis();
+
+        unsigned long now = millis();
+
+        if(state == WAITING) {
+			if(buttonPressed) {
+				falseStart = true;
+				state = DONE;
+				setRgbRed();
+				return;
+			}
+
+			if (millis() - waitStartTime >= waitTime) {
+				state = READY;
+				startTime = millis();
+				setRgbGreen();
+			}
+        }
+        else if (state == READY) {
+			if (buttonPressed) {
+				reactionTime = now - startTime;
+				state = DONE;
+
+				// faster have better rgb flash color
+				if (reactionTime < 200) setRgbColor(0, 255, 0);
+				else if (reactionTime < 400) setRgbColor(0, 150, 255);
+				else setRgbColor(255, 100, 0);
+			}
+        }
+        else {
+			if (buttonPressed) {
+				init();
+			}
+        }
+    }
+
+    void draw() {
+        display.clearDisplay();
+        display.setTextColor(SSD1306_WHITE);
+
+        display.setTextSize(2);
+        display.setCursor(10, 10);
+
+        if (state == WAITING) {
+			display.print("WAIT...");
+        }
+        else if (state == READY) {
+			display.print("PRESS!");
+        }
+        else if (state == DONE) {
+			if (falseStart) {
+				display.setTextSize(2);
+				display.setCursor(6, 20);
+				display.print("TOO EARLY!");
+			} else {
+				display.setTextSize(1);
+				display.print("Reaction:");
+				display.setTextSize(2);
+				display.setCursor(10, 25);
+				display.print(reactionTime);
+				display.print("ms");
+			}
+
+			display.setTextSize(1);
+			display.setCursor(10, 52);
+			display.print("Press to retry");
+        }
+        display.display();
+    }
+}
+
 static unsigned long lastTransitionTime = 0;
 
 void initGames() {
@@ -879,6 +976,16 @@ bool handleGamesMode() {
                 TrafficRun::draw();
                 setRgbColor(255, 100, 0); // orange
                 updateRgb();
+            }
+            else if (gamesMenuState.selectedIndex == 4) {
+				currentGameState = STATE_REACTION;
+				backBtnLatched = false;
+				gameMediaMenuOpen = false;
+				swPressStart = 0;
+				ReactionTime::init();
+				ReactionTime::draw();
+				setRgbWhite();
+				updateRgb();
             }
         }
         
@@ -1012,6 +1119,10 @@ bool handleGamesMode() {
         else if (currentGameState == STATE_TRAFFIC) {
             TrafficRun::update(rotaryDir, swPressed);
             TrafficRun::draw();
+        }
+        else if (currentGameState == STATE_REACTION) {
+			ReactionTime::update(rotaryDir, swPressed);
+			ReactionTime::draw();
         }
     }
     
