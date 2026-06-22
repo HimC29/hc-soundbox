@@ -9,11 +9,11 @@
 #include "../globals/settings.h"
 
 
-enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT, STATE_RACE };
+enum GameState { STATE_MENU, STATE_PONG, STATE_FLAPPY, STATE_BREAKOUT, STATE_TRAFFIC };
 static GameState currentGameState = STATE_MENU;
 
 static MenuState gamesMenuState = {0, 0};
-static String gamesItems[] = {"Pong", "Flappy Bird", "Breakout", "Race"};
+static String gamesItems[] = {"Pong", "Flappy Bird", "Breakout", "Traffic Run"};
 static const int gamesItemCount = 4;
 
 static unsigned long rgbTimer = 0;
@@ -31,7 +31,7 @@ static void updateRgbTimer() {
             setRgbBlue();
         } else if (currentGameState == STATE_BREAKOUT) {
             setRgbGreen();
-        } else if (currentGameState == STATE_RACE) {
+        } else if (currentGameState == STATE_TRAFFIC) {
             setRgbColor(255, 100, 0); // orange for race
         } else {
             setRgbWhite();
@@ -620,7 +620,7 @@ namespace Breakout {
     }
 }
 
-namespace Race {
+namespace TrafficRun {
     struct Enemy {
         float x;
         float y;
@@ -871,12 +871,12 @@ bool handleGamesMode() {
                 updateRgb();
             }
             else if (gamesMenuState.selectedIndex == 3) {
-                currentGameState = STATE_RACE;
+                currentGameState = STATE_TRAFFIC;
                 backBtnLatched = false;
                 gameMediaMenuOpen = false;
                 swPressStart = 0;
-                Race::init();
-                Race::draw();
+                TrafficRun::init();
+                TrafficRun::draw();
                 setRgbColor(255, 100, 0); // orange
                 updateRgb();
             }
@@ -1009,9 +1009,9 @@ bool handleGamesMode() {
             Breakout::update(rotaryDir, swPressed);
             Breakout::draw();
         }
-        else if (currentGameState == STATE_RACE) {
-            Race::update(rotaryDir, swPressed);
-            Race::draw();
+        else if (currentGameState == STATE_TRAFFIC) {
+            TrafficRun::update(rotaryDir, swPressed);
+            TrafficRun::draw();
         }
     }
     
