@@ -20,7 +20,7 @@ String millisToMinSec(unsigned long milliseconds) {
 String getFileFormat(String filename) {
     int dotIndex = filename.lastIndexOf('.');
     
-    // No dot found, or dot is the last character
+    // no dot found, or dot is the last character
     if (dotIndex == -1 || dotIndex == filename.length() - 1) {
         return "";
     }
@@ -28,30 +28,30 @@ String getFileFormat(String filename) {
     return filename.substring(dotIndex + 1);
 }
 
-// Parses an MP3 header buffer to find the sample rate
+// parses an mp3 header buffer to find the sample rate
 uint32_t parseMP3SampleRate(uint8_t* buffer, size_t bufferSize) {
     for (size_t i = 0; i < bufferSize - 4; i++) {
-        // Look for the MP3 Sync Word (11 bits set to 1: 0xFF and top 3 bits of next byte)
+        // look for the mp3 sync word (11 bits set to 1: 0xff and top 3 bits of next byte)
         if (buffer[i] == 0xFF && (buffer[i+1] & 0xE0) == 0xE0) {
-            uint8_t mpegVersion = (buffer[i+1] >> 3) & 0x03; // 3 = MPEG v1, 2 = MPEG v2
+            uint8_t mpegVersion = (buffer[i+1] >> 3) & 0x03; // 3 = mpeg v1, 2 = mpeg v2
             uint8_t sampleRateIdx = (buffer[i+2] >> 2) & 0x03;
             
-            if (mpegVersion == 3) { // MPEG 1
+            if (mpegVersion == 3) { // mpeg 1
                 if (sampleRateIdx == 0) return 44100;
                 if (sampleRateIdx == 1) return 48000;
                 if (sampleRateIdx == 2) return 32000;
-            } else if (mpegVersion == 2) { // MPEG 2
+            } else if (mpegVersion == 2) { // mpeg 2
                 if (sampleRateIdx == 0) return 22050;
                 if (sampleRateIdx == 1) return 24000;
                 if (sampleRateIdx == 2) return 16000;
             }
-            break; // Found sync but unknown version setup
+            break; // found sync but unknown version setup
         }
     }
-    return 44100; // Standard robust default fallback
+    return 44100; // standard robust default fallback
 }
 
-// Parses an MP3 header buffer to find the CBR bitrate
+// parses an mp3 header buffer to find the cbr bitrate
 uint32_t parseMP3Bitrate(uint8_t* buffer, size_t bufferSize) {
     for (size_t i = 0; i < bufferSize - 4; i++) {
         if (buffer[i] == 0xFF && (buffer[i+1] & 0xE0) == 0xE0) {
@@ -64,15 +64,15 @@ uint32_t parseMP3Bitrate(uint8_t* buffer, size_t bufferSize) {
             break;
         }
     }
-    return 128000; // Safe baseline fallback
+    return 128000; // safe baseline fallback
 }
 
 #define SD_CS 5
 
-// Loops until SD can init also shows message to user to insert sd card
+// loops until sd can init also shows message to user to insert sd card
 void awaitSdInit() {
     SD.end();
-    // SD init
+    // sd init
     while(!SD.begin(SD_CS)) {
         delay(50);
         yield();
@@ -90,7 +90,7 @@ bool awaitSdInitOrBack() {
             return false;
         }
 
-        // Keep Bounce2 state reasonably fresh too (used elsewhere).
+        // keep bounce2 state reasonably fresh too (used elsewhere)
         backBtn.update();
         if(backBtn.pressed()) {
             backBtnLatched = false;
@@ -99,8 +99,8 @@ bool awaitSdInitOrBack() {
 
         if(SD.begin(SD_CS)) return true;
 
-        // If the user pressed Back while SD.begin() was blocking,
-        // the ISR will have latched it for us.
+        // if the user pressed back while sd.begin() was blocking,
+        // the isr will have latched it for us
         if(backBtnLatched) {
             backBtnLatched = false;
             return false;
@@ -139,7 +139,7 @@ void initRotaryInterrupt() {
     pinMode(clkPin, INPUT_PULLUP);
     pinMode(dtPin, INPUT_PULLUP);
     
-    // Read initial state
+    // read initial state
     lastState = (digitalRead(clkPin) << 1) | digitalRead(dtPin);
     accumulator = 0;
     
@@ -147,7 +147,7 @@ void initRotaryInterrupt() {
     attachInterrupt(digitalPinToInterrupt(dtPin), encoderISR, CHANGE);
 }
 
-// Function to get current rotary encoder state
+// function to get current rotary encoder state
 int readRotary() {
     if (rotaryDelta == 0) return 0;
     

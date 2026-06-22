@@ -32,7 +32,7 @@ static void updateRgbTimer() {
         } else if (currentGameState == STATE_BREAKOUT) {
             setRgbGreen();
         } else if (currentGameState == STATE_RACE) {
-            setRgbColor(255, 100, 0); // Orange for Race
+            setRgbColor(255, 100, 0); // orange for race
         } else {
             setRgbWhite();
         }
@@ -46,7 +46,7 @@ namespace Pong {
     const int paddleW = 20;
     const int paddleH = 3;
     
-    // AI Opponent Paddle
+    // ai opponent paddle
     float aiPaddleX;
     const int aiPaddleY = 11;
     const int aiPaddleW = 20;
@@ -95,11 +95,11 @@ namespace Pong {
         if (now - lastUpdate >= 25) {
             lastUpdate = now;
             
-            // Move AI paddle smoothly towards the ball with a speed limit and error offset
+            // move ai paddle smoothly towards the ball with a speed limit and error offset
             float targetX = ballX + ballSize / 2.0f - aiPaddleW / 2.0f + aiErrorOffset;
             float diff = targetX - aiPaddleX;
             
-            // Track slower when the ball is moving away, faster when moving towards AI
+            // track slower when the ball is moving away, faster when moving towards ai
             float lerpFactor = 0.12f;
             float maxStep = 1.8f;
             if (ballDY > 0) {
@@ -118,20 +118,20 @@ namespace Pong {
             ballX += ballDX;
             ballY += ballDY;
             
-            // Wall bounce (left/right walls only)
+            // wall bounce (left/right walls only)
             if (ballX <= 0) {
                 ballX = 0;
                 ballDX = -ballDX;
-                aiErrorOffset = random(-6, 7); // Randomize AI tracking error on wall bounce
+                aiErrorOffset = random(-6, 7); // randomize ai tracking error on wall bounce
                 triggerRgbFlash(0, 0, 100, 50);
             } else if (ballX >= 128 - ballSize) {
                 ballX = 128 - ballSize;
                 ballDX = -ballDX;
-                aiErrorOffset = random(-6, 7); // Randomize AI tracking error on wall bounce
+                aiErrorOffset = random(-6, 7); // randomize ai tracking error on wall bounce
                 triggerRgbFlash(0, 0, 100, 50);
             }
             
-            // AI Paddle bounce (top paddle)
+            // ai paddle bounce (top paddle)
             if (ballY <= aiPaddleY + aiPaddleH && ballY >= aiPaddleY) {
                 if (ballX + ballSize >= aiPaddleX && ballX <= aiPaddleX + aiPaddleW) {
                     ballY = aiPaddleY + aiPaddleH;
@@ -145,12 +145,12 @@ namespace Pong {
                     if (ballDY < -3.0f) ballDY = -3.0f;
                     if (ballDY > 3.0f) ballDY = 3.0f;
                     
-                    aiErrorOffset = 0.0f; // Reset error offset on bounce
+                    aiErrorOffset = 0.0f; // reset error offset on bounce
                     triggerRgbFlash(0, 0, 100, 50);
                 }
             }
             
-            // Player Paddle bounce (bottom paddle)
+            // player paddle bounce (bottom paddle)
             if (ballY >= paddleY - ballSize && ballY <= paddleY) {
                 if (ballX + ballSize >= paddleX && ballX <= paddleX + paddleW) {
                     ballY = paddleY - ballSize;
@@ -164,17 +164,17 @@ namespace Pong {
                     if (ballDY < -3.0f) ballDY = -3.0f;
                     if (ballDY > 3.0f) ballDY = 3.0f;
                     
-                    aiErrorOffset = random(-6, 7); // Randomize AI tracking error when player hits ball
-                    triggerRgbFlash(0, 255, 255, 50); // Flash Cyan when player blocks
+                    aiErrorOffset = random(-6, 7); // randomize ai tracking error when player hits ball
+                    triggerRgbFlash(0, 255, 255, 50); // flash cyan when player blocks
                 }
             }
             
-            // Out of bounds (top side - AI missed)
+            // out of bounds (top side - ai missed)
             if (ballY < 11) {
                 score++;
-                triggerRgbFlash(0, 255, 0, 150); // Flash Green when player scores
+                triggerRgbFlash(0, 255, 0, 150); // flash green when player scores
                 
-                // Serve from AI paddle position
+                // serve from ai paddle position
                 ballX = aiPaddleX + aiPaddleW / 2.0f;
                 ballY = 20.0f;
                 ballDX = (random(0, 2) == 0 ? -1.0f : 1.0f);
@@ -182,7 +182,7 @@ namespace Pong {
                 aiErrorOffset = 0.0f;
             }
             
-            // Out of bounds (bottom side - Player missed)
+            // out of bounds (bottom side - player missed)
             if (ballY > 64) {
                 lives--;
                 if (lives <= 0) {
@@ -194,7 +194,7 @@ namespace Pong {
                     ballDX = 1.0f;
                     ballDY = -1.3f;
                     aiErrorOffset = 0.0f;
-                    triggerRgbFlash(255, 0, 0, 200); // Flash Red when player loses a life
+                    triggerRgbFlash(255, 0, 0, 200); // flash red when player loses a life
                 }
             }
         }
@@ -228,13 +228,8 @@ namespace Pong {
         display.print(lives);
         display.drawFastHLine(0, 10, 128, SSD1306_WHITE);
         
-        // Draw Player Paddle
         display.fillRect((int)paddleX, paddleY, paddleW, paddleH, SSD1306_WHITE);
-        
-        // Draw AI Paddle
         display.fillRect((int)aiPaddleX, aiPaddleY, aiPaddleW, aiPaddleH, SSD1306_WHITE);
-        
-        // Draw Ball
         display.fillRect((int)ballX, (int)ballY, (int)ballSize, (int)ballSize, SSD1306_WHITE);
         
         display.display();
@@ -247,7 +242,7 @@ namespace Flappy {
     const float gravity = 0.15f;
     const float flapStrength = -2.0f;
     
-    // Difficulty settings
+    // difficulty settings
     const float pipeSpeed = 1.75f;
     const float pipeSpacing = 52.0f;
     
@@ -369,13 +364,9 @@ namespace Flappy {
         display.print("Score: ");
         display.print(score);
         
-        // Ground line
         display.drawFastHLine(0, 60, 128, SSD1306_WHITE);
-        
-        // Bird
         display.fillRect(20, (int)birdY, 4, 4, SSD1306_WHITE);
         
-        // Pipes
         for (int i = 0; i < 2; i++) {
             int px = (int)pipes[i].x;
             int gapTop = pipes[i].gapY;
@@ -413,29 +404,29 @@ namespace Breakout {
             for (int c = 0; c < 8; c++) {
                 bool brickPresent = false;
                 switch (patternIndex) {
-                    case 0: // Full grid
+                    case 0: // full grid
                         brickPresent = true;
                         break;
-                    case 1: // Alternating columns (stripes)
+                    case 1: // alternating columns (stripes)
                         brickPresent = (c % 2 == 0);
                         break;
-                    case 2: // Alternating rows
+                    case 2: // alternating rows
                         brickPresent = (r % 2 == 0);
                         break;
-                    case 3: // Pyramid / V-shape
+                    case 3: // pyramid / v-shape
                         brickPresent = (c >= r && c < 8 - r);
                         break;
-                    case 4: // Checkerboard
+                    case 4: // checkerboard
                         brickPresent = ((r + c) % 2 == 0);
                         break;
-                    case 5: // Outer border
+                    case 5: // outer border
                         brickPresent = (r == 0 || r == 3 || c == 0 || c == 7);
                         break;
-                    case 6: // Diamond
+                    case 6: // diamond
                         if (r == 0 || r == 3) brickPresent = (c == 3 || c == 4);
                         else brickPresent = (c >= 2 && c <= 5);
                         break;
-                    case 7: // Two pillars
+                    case 7: // two pillars
                         brickPresent = (c == 1 || c == 2 || c == 5 || c == 6);
                         break;
                 }
@@ -455,7 +446,7 @@ namespace Breakout {
         lives = 3;
         level = 1;
         gameOver = false;
-        generateLevelBricks(0); // Level 1 is full grid
+        generateLevelBricks(0); // level 1 is full grid
         lastUpdate = millis();
     }
     
@@ -481,7 +472,7 @@ namespace Breakout {
             ballX += ballDX;
             ballY += ballDY;
             
-            // Wall bounce
+            // wall bounce
             if (ballX <= 0) {
                 ballX = 0;
                 ballDX = -ballDX;
@@ -498,7 +489,7 @@ namespace Breakout {
                 triggerRgbFlash(0, 100, 0, 50);
             }
             
-            // Paddle bounce
+            // paddle bounce
             if (ballY >= paddleY - ballSize && ballY <= paddleY) {
                 if (ballX + ballSize >= paddleX && ballX <= paddleX + paddleW) {
                     ballY = paddleY - ballSize;
@@ -515,7 +506,7 @@ namespace Breakout {
                 }
             }
             
-            // Brick collisions
+            // brick collisions
             if (ballY >= 12 && ballY <= 36) {
                 int r = (int)(ballY - 12) / 6;
                 int c = (int)(ballX - 1) / 16;
@@ -543,15 +534,15 @@ namespace Breakout {
                         }
                         
                         if (bricksLeft <= 0) {
-                            // Level cleared! Progress to next level automatically
+                            // level cleared! progress to next level automatically
                             level++;
-                            triggerRgbFlash(0, 255, 0, 500); // Long green flash for level clear
+                            triggerRgbFlash(0, 255, 0, 500); // long green flash for level clear
                             
-                            // Select next pattern randomly (0 to 7)
+                            // select next pattern randomly (0 to 7)
                             int nextPattern = random(0, 8);
                             generateLevelBricks(nextPattern);
                             
-                            // Increase difficulty: scale ball speed
+                            // increase difficulty: scale ball speed
                             float speedMultiplier = min(1.6f, 1.0f + (level - 1) * 0.08f);
                             ballX = paddleX + paddleW / 2.0f;
                             ballY = 40.0f;
@@ -562,7 +553,7 @@ namespace Breakout {
                 }
             }
             
-            // Out of bounds
+            // out of bounds
             if (ballY > 64) {
                 lives--;
                 if (lives <= 0) {
@@ -675,16 +666,16 @@ namespace Race {
     }
     
     void drawCar(int x, int y, bool isPlayer) {
-        // Draw main body
+        // draw main body
         display.fillRect(x + 2, y, 5, 14, SSD1306_WHITE);
-        // Draw wheels
+        // draw wheels
         display.fillRect(x, y + 2, 2, 3, SSD1306_WHITE);
         display.fillRect(x + 7, y + 2, 2, 3, SSD1306_WHITE);
         display.fillRect(x, y + 9, 2, 3, SSD1306_WHITE);
         display.fillRect(x + 7, y + 9, 2, 3, SSD1306_WHITE);
-        // Draw spoiler (rear wing)
+        // draw spoiler (rear wing)
         display.drawFastHLine(x, y + 13, 9, SSD1306_WHITE);
-        // Draw front wing
+        // draw front wing
         display.drawFastHLine(x + 1, y, 7, SSD1306_WHITE);
         
         if (!isPlayer) {
@@ -698,7 +689,7 @@ namespace Race {
         if (gameOver) {
             if (buttonPressed) {
                 init();
-                setRgbColor(255, 100, 0); // Orange
+                setRgbColor(255, 100, 0); // orange
             }
             return;
         }
@@ -714,7 +705,7 @@ namespace Race {
             
             roadOffset += speed;
             
-            // Score and speed scaling
+            // score and speed scaling
             if (now - lastScoreTime >= 200) {
                 score++;
                 lastScoreTime = now;
@@ -723,7 +714,7 @@ namespace Race {
                 }
             }
             
-            // Move enemies
+            // move enemies
             for (int i = 0; i < 2; i++) {
                 if (enemies[i].active) {
                     enemies[i].y += speed + 0.8f;
@@ -731,16 +722,16 @@ namespace Race {
                         enemies[i].active = false;
                     }
                     
-                    // Collision check
+                    // collision check
                     if (checkCollision(playerX, playerY, playerW, playerH, enemies[i].x, enemies[i].y, playerW, playerH)) {
                         gameOver = true;
-                        triggerRgbFlash(255, 0, 0, 500); // Red flash
+                        triggerRgbFlash(255, 0, 0, 500); // red flash
                         break;
                     }
                 }
             }
             
-            // Spawn enemies
+            // spawn enemies
             if (!gameOver && now - spawnTimer >= 1500) {
                 for (int i = 0; i < 2; i++) {
                     if (!enemies[i].active) {
@@ -782,35 +773,35 @@ namespace Race {
             return;
         }
         
-        // Draw side lines / road borders
+        // draw side lines / road borders
         int offset = (int)roadOffset % 16;
         for (int y = -16 + offset; y < 64; y += 16) {
             display.drawFastVLine(24, y, 8, SSD1306_WHITE);
             display.drawFastVLine(104, y, 8, SSD1306_WHITE);
         }
         
-        // Draw roadside scenery (posts)
+        // draw roadside scenery (posts)
         int sceneryOffset = (int)roadOffset % 32;
         for (int y = -32 + sceneryOffset; y < 64; y += 32) {
-            // Left scenery
+            // left scenery
             display.drawFastVLine(10, y, 4, SSD1306_WHITE);
             display.drawCircle(10, y, 2, SSD1306_WHITE);
-            // Right scenery
+            // right scenery
             display.drawFastVLine(118, y, 4, SSD1306_WHITE);
             display.drawCircle(118, y, 2, SSD1306_WHITE);
         }
         
-        // Draw player car
+        // draw player car
         drawCar((int)playerX, playerY, true);
         
-        // Draw enemy cars
+        // draw enemy cars
         for (int i = 0; i < 2; i++) {
             if (enemies[i].active) {
                 drawCar((int)enemies[i].x, (int)enemies[i].y, false);
             }
         }
         
-        // Draw HUD / Score
+        // draw hud / score
         display.setTextColor(SSD1306_WHITE);
         display.setTextSize(1);
         display.setCursor(2, 2);
@@ -886,7 +877,7 @@ bool handleGamesMode() {
                 swPressStart = 0;
                 Race::init();
                 Race::draw();
-                setRgbColor(255, 100, 0); // Orange
+                setRgbColor(255, 100, 0); // orange
                 updateRgb();
             }
         }
@@ -896,19 +887,19 @@ bool handleGamesMode() {
             backBtnLatched = false;
             if (millis() - lastTransitionTime >= 300) {
                 lastTransitionTime = millis();
-                return true; // Go back to SYSTEM MENU
+                return true; // go back to system menu
             }
         }
     } else {
-        // Single update — call update() once and reuse the result everywhere.
-        // Previously update() was called at three different places, causing the
+        // single update  call update() once and reuse the result everywhere
+        // previously update() was called at three different places, causing the
         // second and third pressed() checks to always return false because the
-        // HIGH->LOW transition was already consumed by the first call.
+        // high->low transition was already consumed by the first call
         swRotary.update();
         bool swPressed = swRotary.pressed();
         int rotaryDir = readRotary();
 
-        // Long-press detection: track when button first goes down.
+        // long-press detection: track when button first goes down
         if (swPressed) {
             swPressStart = millis();
         }
@@ -916,7 +907,7 @@ bool handleGamesMode() {
             if (millis() - swPressStart >= 1000) {
                 gameMediaMenuOpen = true;
                 swPressStart = 0;
-                // Don't pass this press down to the game or media menu.
+                // don't pass this press down to the game or media menu
                 swPressed = false;
             }
         }
@@ -933,14 +924,14 @@ bool handleGamesMode() {
             if (swPressed) {
                 unsigned long now = millis();
                 if (now - lastMediaPressTime < 350) {
-                    // Double click: skip song
+                    // double click: skip song
                     if (songInfo.format != "") {
                         stopAudio = true;
                         songInfo.paused = false;
                         audioPaused = true;
                     }
                 } else {
-                    // Toggle play/pause
+                    // toggle play/pause
                     if (songInfo.format != "") {
                         if (songInfo.paused) {
                             handleResume();
@@ -958,7 +949,7 @@ bool handleGamesMode() {
                 gameMediaMenuOpen = false;
             }
 
-            // Draw overlay
+            // draw overlay
             display.clearDisplay();
             display.setTextSize(1);
             display.setTextColor(SSD1306_WHITE);
@@ -992,7 +983,7 @@ bool handleGamesMode() {
             return false;
         }
 
-        // Back button always exits game to menu
+        // back button always exits game to menu
         backBtn.update();
         if (backBtn.pressed() || backBtnLatched) {
             backBtnLatched = false;

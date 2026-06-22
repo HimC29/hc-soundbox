@@ -36,15 +36,15 @@ namespace Settings {
     }
 
     void applyBrightness() {
-        // Contrast command for SSD1306
+        // contrast command for ssd1306
         display.ssd1306_command(SSD1306_SETCONTRAST);
         display.ssd1306_command(brightness);
 
-        display.ssd1306_command(0xD9); // SSD1306_SETPRECHARGE
+        display.ssd1306_command(0xD9); // ssd1306_setprecharge
         if (brightness < 50) {
-            display.ssd1306_command(0x11); // Very dim pre-charge
+            display.ssd1306_command(0x11); // very dim pre-charge
         } else {
-            display.ssd1306_command(0xF1); // Standard pre-charge
+            display.ssd1306_command(0xF1); // standard pre-charge
         }
     }
 

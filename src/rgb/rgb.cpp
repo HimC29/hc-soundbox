@@ -5,7 +5,7 @@ namespace {
 constexpr uint8_t RED_PIN = 14;
 constexpr uint8_t GREEN_PIN = 15;
 constexpr uint8_t BLUE_PIN = 13;
-// Per-channel calibration (0..255). Reduce green because it appears brighter.
+// per-channel calibration (0..255). reduce green because it appears brighter
 constexpr uint8_t RED_LEVEL = 140;
 constexpr uint8_t GREEN_LEVEL = 45;
 constexpr uint8_t BLUE_LEVEL = 255;
@@ -30,7 +30,7 @@ void writeRgb(uint8_t r, uint8_t g, uint8_t b) {
     analogWrite(BLUE_PIN, bb);
 }
 
-// Fast integer HSV->RGB for full saturation/value.
+// fast integer hsv->rgb for full saturation/value
 void hueToRgb(uint16_t h, uint8_t& r, uint8_t& g, uint8_t& b) {
     const uint8_t region = (h / 60) % 6;
     const uint8_t remainder = (h % 60) * 255 / 60;
@@ -97,7 +97,7 @@ void updateRgb() {
     if(!rainbowEnabled) return;
 
     const unsigned long now = millis();
-    if(now - lastStepMs < 20) return; // ~50 updates/sec for smooth transitions.
+    if(now - lastStepMs < 20) return; // ~50 updates/sec for smooth transitions
     lastStepMs = now;
 
     uint8_t r, g, b;

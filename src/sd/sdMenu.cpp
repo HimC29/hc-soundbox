@@ -25,7 +25,7 @@ bool handleSongPicker() {
         int adjustedIndex = menuState.selectedIndex;
         if(hasNowPlaying) {
             if(menuState.selectedIndex == 0) {
-                // Return to playing page
+                // return to playing page
                 sdShowingPlayingPage = true;
                 drawPlayingPage();
                 updateLengthDisplay();
@@ -160,10 +160,10 @@ void handlePlayingPage() {
             stopAudio = true;
             songInfo.paused = false; // ensure task loop unblocks and terminates
             audioPaused = false;
-            if(output) output->stop(); // Force I2S output to stop so WAV decoder loop unblocks
+            if(output) output->stop(); // force i2s output to stop so wav decoder loop unblocks
         }
         else {
-            // Short press: go back to menu but KEEP playing!
+            // short press: go back to menu but keep playing!
             sdShowingPlayingPage = false;
             drawFileMenu();
         }
@@ -197,10 +197,10 @@ bool handleSdMode() {
 }
 
 void checkAudioStatus() {
-    // Guard: handleStartSong sets this while it's running (including during the
-    // blocking stopSong() wait). Without this, loop() would call checkAudioStatus
-    // again mid-stopSong, see audioTaskHandle==NULL && stopAudio==true, and fire
-    // a spurious second auto-advance.
+    // guard: handlestartsong sets this while it's running (including during the
+    // blocking stopsong() wait). without this, loop() would call checkaudiostatus
+    // again mid-stopsong, see audiotaskhandle==null && stopaudio==true, and fire
+    // a spurious second auto-advance
     if (startingSong) return;
 
     static unsigned long lastLog = 0;
@@ -244,7 +244,7 @@ void checkAudioStatus() {
                 return;
             }
 
-            // Find next playable file using our robust loop
+            // find next playable file using our robust loop
             int nextIndex = playbackSelectedIndex;
             bool found = false;
             for (int attempt = 0; attempt < playbackDirContents.fileCount; attempt++) {

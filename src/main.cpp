@@ -63,12 +63,12 @@ void handleSystemMenuSelect() {
 
     swRotary.update();
     if(swRotary.pressed()) {
-        backBtnLatched = false; // Clear any stale back button latch from the System Menu
+        backBtnLatched = false; // clear stale back button latch
         switch(systemMenuState.selectedIndex) {
             case 0:
                 appMode = MODE_SD;
                 if (songInfo.format != "") {
-                    // Song is already playing in the background - preserve state and draw the correct screen
+                    // song is already playing, keep state and redraw screen
                     if (sdShowingPlayingPage) {
                         drawPlayingPage();
                         updateLengthDisplay();
@@ -80,13 +80,13 @@ void handleSystemMenuSelect() {
                         drawFileMenu();
                     }
                 } else {
-                    // Fresh entry to SD mode - perform full initialization
+                    // fresh entry to sd mode, do full setup
                     volume = Settings::defaultSdVol;
                     initSdAudioOutput();
                     currentDir = "/";
                     while(true) {
                         showInsertSdMessage();
-                        // Allow user to go back to the system menu while waiting for SD.
+                        // let user go back to system menu while waiting for sd card
                         if(!awaitSdInitOrBack()) {
                             releaseSdAudioOutput();
                             appMode = MODE_SELECT;

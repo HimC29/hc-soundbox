@@ -19,7 +19,7 @@ struct Setting {
     void (*onChange)();
 };
 
-// Formatting helpers
+// formatting helpers
 static String formatPercent(int val) {
     return String(val) + "%";
 }
@@ -38,18 +38,18 @@ static String formatInt(int val) {
     return String(val);
 }
 
-// Settings items
+// settings items
 static Setting settings[] = {
-    // Display
+    // display
     {"OLED Bright", 15, 255, 15, &Settings::brightness, formatInt, Settings::applyBrightness},
     {"LED Bright", 0, 255, 15, &Settings::ledBrightness, formatInt, Settings::applyLedBrightness},
-    // Audio
+    // audio
     {"Volume Step", 1, 20, 1, &Settings::volumeStep, formatInt, nullptr},
     {"SD Def Vol", 0, 100, 5, &Settings::defaultSdVol, formatPercent, nullptr},
     {"BT Def Vol", 0, 100, 5, &Settings::defaultBtVol, formatPercent, nullptr},
-    // Media
+    // media
     {"Song Sort", 0, 2, 1, &Settings::songSorting, formatSort, nullptr},
-    // System
+    // system
     {"Restore Defaults", 0, 0, 0, nullptr, nullptr, Settings::restoreDefaults}
 };
 static const int numSettings = sizeof(settings) / sizeof(Setting);
@@ -87,7 +87,7 @@ bool handleControlsMode() {
 
     if (rotaryReadings != 0) {
         if (editMode) {
-            // Edit mode: change value
+            // edit mode, change value
             Setting& s = settings[controlsMenuState.selectedIndex];
             if (s.valuePtr != nullptr) {
                 int currentVal = *(s.valuePtr);
@@ -100,7 +100,7 @@ bool handleControlsMode() {
                 drawControlsMenu();
             }
         } else {
-            // Scroll mode: scroll through items
+            // scroll mode, scroll through items
             updateMenuState(controlsMenuState, numSettings, rotaryReadings);
             drawControlsMenu();
         }
@@ -110,19 +110,19 @@ bool handleControlsMode() {
     if (swRotary.pressed()) {
         Setting& s = settings[controlsMenuState.selectedIndex];
         if (s.valuePtr == nullptr) {
-            // Trigger action directly
+            // trigger action directly
             if (s.onChange != nullptr) {
                 s.onChange();
             }
             drawControlsMenu();
         } else {
             if (editMode) {
-                // Confirm value and exit edit mode
+                // confirm value and exit edit mode
                 editMode = false;
                 Settings::save();
                 drawControlsMenu();
             } else {
-                // Enter edit mode
+                // enter edit mode
                 editMode = true;
                 originalValue = *(s.valuePtr);
                 drawControlsMenu();
@@ -134,7 +134,7 @@ bool handleControlsMode() {
     if (backBtn.pressed() || backBtnLatched) {
         backBtnLatched = false;
         if (editMode) {
-            // Cancel edit mode: restore original value
+            // cancel edit mode, restore original value
             Setting& s = settings[controlsMenuState.selectedIndex];
             if (s.valuePtr != nullptr) {
                 *(s.valuePtr) = originalValue;
@@ -145,7 +145,7 @@ bool handleControlsMode() {
             editMode = false;
             drawControlsMenu();
         } else {
-            // Exit Settings menu completely
+            // exit settings menu completely
             return true;
         }
     }

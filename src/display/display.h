@@ -24,5 +24,5 @@ void updateLengthDisplay();
 void drawPauseBtn();
 void drawResumeBtn();
 
-// Bluetooth screen
+// bluetooth screen
 void drawBluetoothScreen(bool isConnected, int volumePercent);

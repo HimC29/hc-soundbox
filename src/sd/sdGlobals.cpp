@@ -17,5 +17,5 @@ String currentDir = "/";
 String playbackDir = "/";
 int playbackSelectedIndex = -1;
 bool sdShowingPlayingPage = false;
-bool startingSong = false; // Guard: true while handleStartSong is executing
+bool startingSong = false; // guard: true while handlestartsong is executing
 

@@ -10,7 +10,7 @@
 ScreensaverType currentScreensaver = SS_DVD;
 static unsigned long lastFrameTime = 0;
 
-// DVD bounce variables
+// dvd bounce variables
 static float dvdX = 10.0f;
 static float dvdY = 10.0f;
 static float dvdVx = 1.2f;
@@ -19,19 +19,19 @@ static constexpr int dvdW = 32;
 static constexpr int dvdH = 12;
 
 static const uint8_t dvdColors[][3] = {
-    {255, 0, 0},     // Red
-    {0, 255, 0},     // Green
-    {0, 0, 255},     // Blue
-    {255, 255, 0},   // Yellow
-    {255, 0, 255},   // Magenta
-    {0, 255, 255},   // Cyan
-    {255, 127, 0},   // Orange
-    {128, 0, 255}    // Purple
+    {255, 0, 0},
+    {0, 255, 0},
+    {0, 0, 255},
+    {255, 255, 0},
+    {255, 0, 255},
+    {0, 255, 255},
+    {255, 127, 0},
+    {128, 0, 255}
 };
 static constexpr int numDvdColors = sizeof(dvdColors) / sizeof(dvdColors[0]);
 static int dvdColorIdx = 0;
 
-// Matrix rain variables
+// matrix rain variables
 struct MatrixColumn {
     int16_t headY;
     int16_t length;
@@ -41,7 +41,7 @@ struct MatrixColumn {
 };
 static MatrixColumn matrixCols[16];
 
-// Oscilloscope variables
+// oscilloscope variables
 static float currentAmplitude = 15.0f;
 static float targetAmplitude = 15.0f;
 static float currentFrequency = 0.05f;
@@ -138,7 +138,7 @@ static void updateAndDrawDvd() {
 }
 
 static void updateAndDrawMatrix() {
-    // Pulse the green LED gently to match the code rain!
+    // pulse the green led gently to match the code rain!
     float pulse = 115.0f + 85.0f * sin(millis() / 500.0f);
     setRgbColor(0, (uint8_t)pulse, 0);
 
@@ -200,7 +200,7 @@ static void updateAndDrawOscilloscope() {
         lastTargetChange = millis();
     }
     
-    // Pulse cyan/blue phosphor LED trace gently based on animation phase
+    // pulse cyan/blue phosphor led trace gently based on animation phase
     float ledPulse = 128.0f + 127.0f * sin(phase * 2.0f);
     setRgbColor(0, (uint8_t)(ledPulse * 0.7f), (uint8_t)ledPulse);
     
@@ -222,7 +222,7 @@ static unsigned long lastPressTime = 0;
 void drawScreensaverMusicOverlay() {
     if (songInfo.format == "") return;
 
-    // Detect track change, volume change, or pause/resume change
+    // detect track change, volume change, or pause/resume change
     if (songInfo.name != lastOverlaySongName || volume != lastOverlayVolume || songInfo.paused != lastOverlayPaused) {
         overlayEndTime = millis() + 3000;
         lastOverlaySongName = songInfo.name;
@@ -231,7 +231,7 @@ void drawScreensaverMusicOverlay() {
     }
 
     if (millis() < overlayEndTime) {
-        // Draw a sleek black banner at the top
+        // draw a sleek black banner at the top
         display.fillRect(0, 0, 128, 14, SSD1306_BLACK);
         display.drawFastHLine(0, 14, 128, SSD1306_WHITE);
 
@@ -239,21 +239,21 @@ void drawScreensaverMusicOverlay() {
         display.setTextColor(SSD1306_WHITE);
         display.setCursor(4, 3);
         
-        // Draw small note icon or state
+        // draw small note icon or state
         if (songInfo.paused) {
             display.print("|| ");
         } else {
             display.print("> ");
         }
         
-        // Draw truncated song name
+        // draw truncated song name
         String nameToShow = songInfo.name;
         if (nameToShow.length() > 14) {
             nameToShow = nameToShow.substring(0, 11) + "...";
         }
         display.print(nameToShow);
 
-        // Draw volume percentage
+        // draw volume percentage
         display.setCursor(94, 3);
         display.print("V:");
         display.print(volume);
@@ -263,7 +263,7 @@ void drawScreensaverMusicOverlay() {
 bool handleScreensavers() {
     int rotaryReadings = readRotary();
     if (rotaryReadings != 0) {
-        // Button held down (pin DT or button pin? The button pin is swPin!)
+        // button held down (pin dt or button pin? the button pin is swpin!)
         if (digitalRead(swPin) == LOW) {
             if (songInfo.format != "") {
                 volume = constrain(volume + rotaryReadings * Settings::volumeStep, 0, 100);
@@ -283,14 +283,14 @@ bool handleScreensavers() {
     if (swRotary.pressed()) {
         unsigned long now = millis();
         if (now - lastPressTime < 350) {
-            // Double click: Skip song
+            // double click: skip song
             if (songInfo.format != "") {
                 stopAudio = true;
                 songInfo.paused = false;
                 if(output) output->stop();
             }
         } else {
-            // Toggle play/pause
+            // toggle play/pause
             if (songInfo.format != "") {
                 if (songInfo.paused) {
                     handleResume();
@@ -309,7 +309,7 @@ bool handleScreensavers() {
     }
     
     unsigned long now = millis();
-    if (now - lastFrameTime >= 33) { // limit drawing to ~30 FPS
+    if (now - lastFrameTime >= 33) { // limit drawing to ~30 fps
         lastFrameTime = now;
         display.clearDisplay();
         

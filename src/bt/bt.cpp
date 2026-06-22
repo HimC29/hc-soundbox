@@ -13,7 +13,7 @@ BluetoothA2DPSinkQueued a2dpSink(btI2S);
 
 bool btModeActive = false;
 bool btInitialized = false;
-// Keep the Bluetooth device name in stable storage (avoid dangling pointers).
+// keep the bluetooth device name in stable storage (avoid dangling pointers)
 static String btName = "HC Soundbox";
 volatile esp_a2d_connection_state_t btConnectionState = ESP_A2D_CONNECTION_STATE_DISCONNECTED;
 volatile esp_a2d_audio_state_t btAudioState = ESP_A2D_AUDIO_STATE_STOPPED;
@@ -23,12 +23,12 @@ static volatile uint16_t btRequestedSampleRateHz = 44100;
 static volatile bool btSampleRateReinitPending = false;
 
 static void onBtSampleRateChanged(uint16_t sample_rate) {
-    // Laptops commonly use 48kHz while phones often use 44.1kHz.
-    // If we keep I2S fixed at 44.1kHz, 48kHz audio will play slower/lower pitch and drift/skip.
+    // laptops commonly use 48khz while phones often use 44.1khz
+    // if we keep i2s fixed at 44.1khz, 48khz audio will play slower/lower pitch and drift/skip
     if(sample_rate == 0) return;
     if(sample_rate == btSampleRateHz) return;
 
-    // Don't touch I2S inside the BT callback context; just request a re-init.
+    // don't touch i2s inside the bt callback context; just request a re-init
     btRequestedSampleRateHz = sample_rate;
     btSampleRateReinitPending = true;
 }
@@ -44,7 +44,7 @@ void onBtAudioStateChanged(esp_a2d_audio_state_t state, void*) {
 }
 
 void onBtVolumeChanged(int vol) {
-    // Library reports volume as percent (0..100).
+    // library reports volume as percent (0..100)
     volume = constrain(vol, 0, 100);
     btNeedsRedraw = true;
 }
@@ -57,7 +57,7 @@ String connectionStateText() {
 }
 
 void drawBluetoothScreen() {
-    // Snapshot volatile/shared state once for a consistent frame.
+    // snapshot volatile/shared state once for a consistent frame
     const esp_a2d_connection_state_t conn = btConnectionState;
     const int vol = constrain(volume, 0, 100);
     const bool isConnected = (conn == ESP_A2D_CONNECTION_STATE_CONNECTED);
@@ -69,7 +69,7 @@ void startBluetoothMode(const char* deviceName) {
 
     if(deviceName && deviceName[0] != '\0') btName = deviceName;
     if(!btInitialized) {
-        // Guard against heap fragmentation crash in ringbuffer alloc
+        // guard against heap fragmentation crash in ringbuffer alloc
         size_t freeHeap = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
         if(freeHeap < 48 * 1024) {
             Serial.printf("[BT] Insufficient contiguous heap (%d bytes), restarting\n", freeHeap);
@@ -81,10 +81,10 @@ void startBluetoothMode(const char* deviceName) {
         btSampleRateReinitPending = false;
         btI2S.begin(I2S_MODE_STD, btSampleRateHz, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO, I2S_STD_SLOT_BOTH);
 
-        // Use queued output to decouple BT callback timing from I2S writes.
-        // Laptops often push higher bitrate SBC; give the I2S writer more breathing room.
-        // Keep ringbuffer small enough to always fit in fragmented heap.
-        // 96KB was causing intermittent alloc failures after mode switches.
+        // use queued output to decouple bt callback timing from i2s writes
+        // laptops often push higher bitrate sbc; give the i2s writer more breathing room
+        // keep ringbuffer small enough to always fit in fragmented heap
+        // 96kb was causing intermittent alloc failures after mode switches
         a2dpSink.set_i2s_ringbuffer_size(32 * 1024);
         a2dpSink.set_i2s_ringbuffer_prefetch_percent(60);
         a2dpSink.set_i2s_write_size_upto(4096);
@@ -138,7 +138,7 @@ bool handleBluetoothMode() {
     }
 
     if(btNeedsRedraw) {
-        // Clear first so async callbacks during draw aren't lost.
+        // clear first so async callbacks during draw aren't lost
         btNeedsRedraw = false;
         drawBluetoothScreen();
     }

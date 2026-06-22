@@ -6,7 +6,7 @@
 #include "../display/display.h"
 
 unsigned long getWAVLength(File file) {
-    file.seek(12); // skip "RIFF" header
+    file.seek(12); // skip "riff" header
     
     while(file.available()) {
         char chunkId[4];
@@ -53,13 +53,13 @@ unsigned long getMP3Length(File file) {
                                ((uint32_t)(id3Header[8] & 0x7F) << 7)  |
                                ((uint32_t)(id3Header[9] & 0x7F));
             offset = 10 + tagSize;
-            if (id3Header[5] & 0x10) { // Has footer (adds 10 bytes at the end of the tag)
+            if (id3Header[5] & 0x10) { // has footer (adds 10 bytes at end of tag)
                 offset += 10;
             }
         }
     }
 
-    // Read 1000 bytes after the ID3v2 tag
+    // read 1000 bytes after id3v2 tag
     uint8_t header[1000];
     file.seek(offset);
     size_t bytesRead = file.read(header, 1000);
@@ -143,10 +143,10 @@ void audioTask(void* param) {
     Serial.printf("[DBG] audioTask EXIT loop. running=%d stopAudio=%d userStopped=%d sdCardRemoved=%d\n",
         (int)running, (int)stopAudio, (int)userStopped, (int)sdCardRemoved);
 
-    // Mute output immediately.
+    // mute output immediately
     if(output) output->SetGain(0);
 
-    // IMPORTANT: Do NOT call mp3Decoder->stop() / wavDecoder->stop() here.
+    // do not call stop on decoders here
     if(output && !userStopped) output->flush();
     Serial.println("[DBG] audioTask: flush done");
 
@@ -165,28 +165,23 @@ void audioTask(void* param) {
 }
 
 void handleStartSong(String fileLocation, String fileName, String type, bool showPlayingPage) {
-    startingSong = true; // Block checkAudioStatus from re-entering during stopSong() wait
+    startingSong = true; // block checkaudiostatus while waiting for stopsong to finish
     Serial.printf("[DBG] handleStartSong ENTER file=%s type=%s showPage=%d\n",
         fileLocation.c_str(), type.c_str(), (int)showPlayingPage);
-    stopSong(); // Stop currently playing song first (no-op if already stopped)
-    // stopSong() sets userStopped=true internally so the audio task exits cleanly.
-    // Clear it now — from this point forward we're starting a NEW song, not
-    // responding to a user stop. Leaving it set would cause the next
-    // checkAudioStatus() to take the userStopped branch instead of auto-advancing.
+    stopSong(); // stop currently playing song
+    // stopsong sets userstopped internally, clear it now for the new song
     userStopped = false;
     Serial.printf("[DBG] handleStartSong: after stopSong. audioTaskHandle=%p userStopped=%d\n",
         (void*)audioTaskHandle, (int)userStopped);
 
     audioPaused = false;
-    songInfo.paused = false; // Always start the new song unpaused
+    songInfo.paused = false; // always start the new song unpaused
     songInfo.length = getAudioLength(fileLocation);
     source = new AudioFileSourceSD(fileLocation.c_str());
 
     if(type == "mp3") {
         mp3Decoder = new AudioGeneratorMP3();
-        // begin() calls output->begin(). Because we no longer call output->stop()
-        // between songs, i2sOn is still true and begin() will just reconfigure
-        // the sample rate via SetRate() without destroying/recreating the channel.
+        // no need to recreate the channel, begin just updates the sample rate
         mp3Decoder->begin(source, output);
         songInfo.format = "mp3";
     }
@@ -204,9 +199,7 @@ void handleStartSong(String fileLocation, String fileName, String type, bool sho
     songInfo.fileLocation = fileLocation;
     songInfo.startTime = millis();
     stopAudio = false;
-    // Only force the playing page if explicitly requested (user picked a song).
-    // Auto-advance passes sdShowingPlayingPage so the user stays in the file
-    // browser / system menu / games without being interrupted.
+    // only force playing page if user picked a song
     if(showPlayingPage) {
         sdShowingPlayingPage = true;
     }
@@ -219,7 +212,7 @@ void handleStartSong(String fileLocation, String fileName, String type, bool sho
         drawPauseBtn();
         display.display();
     }
-    startingSong = false; // Allow checkAudioStatus to act again
+    startingSong = false; // allow checkaudiostatus to run again
 }
 
 void handlePause() {
@@ -241,17 +234,15 @@ void stopSong() {
         userStopped = true;
         stopAudio = true;
         songInfo.paused = false;
-        // Use audioPaused to make ConsumeSample() return false immediately,
-        // unblocking the audio task on Core 0 without calling output->stop()
-        // cross-core (which can corrupt the I2S driver and cause crashes).
+        // make consumesample return false to unblock task without cross-core crashes
         audioPaused = true;
         
-        // Wait for task to exit and clean itself up (with timeout for safety)
+        // wait for task to exit and clean up with timeout
         unsigned long deadline = millis() + 3000;
         while (audioTaskHandle != NULL && millis() < deadline) {
             delay(10);
         }
-        // audioPaused is reset to false inside the audio task before vTaskDelete
+        // audiopaused is reset to false inside the audio task before vtaskdelete
     }
 }
 

@@ -12,7 +12,7 @@
 #define OLED_RESET -1
 
 static void drawBluetoothIcon(int16_t x, int16_t y) {
-    // Simple BT rune icon (fits in ~10x12).
+    // simple bt rune icon
     display.drawLine(x + 4, y, x + 4, y + 11, SSD1306_WHITE);
     display.drawLine(x + 4, y, x + 9, y + 3, SSD1306_WHITE);
     display.drawLine(x + 4, y + 5, x + 9, y + 3, SSD1306_WHITE);
@@ -29,19 +29,19 @@ void drawBluetoothScreen(bool isConnected, int volumePercent) {
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
 
-    // Top row: BT icon + title.
+    // top row bt icon and title
     drawBluetoothIcon(2, 1);
     display.setCursor(16, 4);
     display.print("HC SoundBox");
     display.drawLine(0, 16, 127, 16, SSD1306_WHITE);
 
-    // Connection state.
+    // connection state
     display.setCursor(2, 24);
     display.print(isConnected ? "Connected" : "Disconnected");
 
-    // Volume (only when connected).
+    // volume, only when connected
     if(isConnected) {
-        // Volume label + bar.
+        // volume label and bar
         display.setCursor(2, 44);
         display.print("VOL");
         display.setCursor(104, 44);
@@ -132,7 +132,7 @@ void drawFileMenu() {
     int scrollOffset = menuState.scrollOffset;
     int selectedIndex = menuState.selectedIndex;
 
-    // Number of items to draw
+    // number of items to draw
     int visibleCount = min((int)maxViewableItems, fileCount - scrollOffset);
     if (visibleCount < 0) visibleCount = 0;
 
@@ -267,16 +267,16 @@ void updateProgressBar() {
         progressBarX + progressBarLength
     );
 
-    // Clear the progress bar strip first to erase old circles/trail
+    // clear progress bar strip first to erase old circles
     display.fillRect(progressBarX - 2, progressBarY - 2, progressBarLength + 5, 5, SSD1306_BLACK);
 
-    // Redraw the bar line
+    // redraw the bar line
     display.drawFastHLine(progressBarX, progressBarY, progressBarLength, SSD1306_WHITE);
 
-    // Draw the new circle indicator
+    // draw new circle indicator
     display.fillCircle(px, progressBarY, 2, SSD1306_WHITE);
 
-    // Clear the time display text area
+    // clear time display text area
     display.fillRect(0, progressBarY + 7, SCREEN_WIDTH / 3, 8, SSD1306_BLACK);
 
     display.setCursor(6, progressBarY + 7);

@@ -63,7 +63,7 @@ bool updateDirContents(const char* workingDirName) {
     if (Settings::songSorting == 0 || Settings::songSorting == 1) {
         std::sort(entries.begin(), entries.end(), [](const DirEntry& a, const DirEntry& b) {
             if (a.isDir != b.isDir) {
-                return a.isDir; // Directories first
+                return a.isDir; // directories first
             }
             String a_lower = a.name; a_lower.toLowerCase();
             String b_lower = b.name; b_lower.toLowerCase();
