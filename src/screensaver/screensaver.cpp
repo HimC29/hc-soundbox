@@ -51,6 +51,23 @@ static constexpr float phaseSpeed = 0.12f;
 static unsigned long lastTargetChange = 0;
 static unsigned long targetChangeInterval = 4000;
 
+// starfield variables
+struct Star {
+	int16_t x;
+	int16_t y;
+	int8_t z;
+};
+static constexpr uint8_t MAX_Z = 100;
+static constexpr int NUM_STARS = 60;
+static Star stars[NUM_STARS];
+
+// starfield reset star function
+static void resetStar(int i) {
+    stars[i].x = random(-64, 65);
+    stars[i].y = random(-32, 33);
+    stars[i].z = random(50, MAX_Z);
+}
+
 static void initActiveScreensaver() {
     switch (currentScreensaver) {
         case SS_DVD:
@@ -88,6 +105,13 @@ static void initActiveScreensaver() {
             targetChangeInterval = random(3000, 6000);
             setRgbColor(0, 180, 255);
             break;
+
+ 		case SS_STARFIELD:
+		    for (int i = 0; i < NUM_STARS; i++) {
+		        resetStar(i);
+		    }
+		    setRgbColor(0, 0, 255);
+		    break;
             
         default:
             break;
@@ -213,6 +237,46 @@ static void updateAndDrawOscilloscope() {
     }
 }
 
+static void updateAndDrawStarfield() {
+	const int16_t centerX = 64;
+    const int16_t centerY = 32;
+
+    for (int i = 0; i < NUM_STARS; i++) {
+
+        // current screen position
+        int16_t px = centerX + (stars[i].x * 64) / stars[i].z;
+        int16_t py = centerY + (stars[i].y * 64) / stars[i].z;
+
+        // move toward viewer
+        stars[i].z--;
+
+        if (stars[i].z <= 1) {
+            resetStar(i);
+            continue;
+        }
+
+        // new screen position
+        int16_t sx = centerX + (stars[i].x * 64) / stars[i].z;
+        int16_t sy = centerY + (stars[i].y * 64) / stars[i].z;
+
+        // if it flies off screen, respawn it
+        if (sx < 0 || sx >= 128 || sy < 0 || sy >= 64) {
+            resetStar(i);
+            continue;
+        }
+
+        // draw streak
+        display.drawLine(px, py, sx, sy, SSD1306_WHITE);
+
+        // make nearby stars look brighter
+        if (stars[i].z < 20) {
+            display.fillRect(sx, sy, 2, 2, SSD1306_WHITE);
+        } else {
+            display.drawPixel(sx, sy, SSD1306_WHITE);
+        }
+    }
+}
+
 static unsigned long overlayEndTime = 0;
 static String lastOverlaySongName = "";
 static int lastOverlayVolume = -1;
@@ -323,6 +387,9 @@ bool handleScreensavers() {
             case SS_OSCILLOSCOPE:
                 updateAndDrawOscilloscope();
                 break;
+			case SS_STARFIELD:
+				updateAndDrawStarfield();
+				break;
             default:
                 break;
         }
