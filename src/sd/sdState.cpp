@@ -52,6 +52,7 @@ bool readDirContents(const char* workingDirName, DirContents& dest) {
         bool isDir;
     };
     std::vector<DirEntry> entries;
+	entries.reserve(64);
 
     while(true) {
         File entry = workingDir.openNextFile();
@@ -76,8 +77,14 @@ bool readDirContents(const char* workingDirName, DirContents& dest) {
         dest.isDir.push_back(entry.isDir);
     }
 
-    dest.fileCount = dest.fileNames.size();
+	dest.fileNames.reserve(entries.size());
+    dest.isDir.reserve(entries.size());
 
+    for (const auto& entry : entries) {
+        dest.fileNames.push_back(entry.name);
+        dest.isDir.push_back(entry.isDir);
+    }
+    dest.fileCount = dest.fileNames.size();
     return true;
 }
 

@@ -100,7 +100,7 @@ void drawMenu(const String& title,
             display.fillRect(0, y, SCREEN_WIDTH, pxPerLn, SSD1306_WHITE);
             display.setTextColor(SSD1306_BLACK);
             display.setCursor(x + marginLeft, y + marginTop);
-            String item = items[scrollOffset + i];
+            const String& item = items[scrollOffset + i];
             if(item.length() > maxLenOfItems) {
                 updateScroll(scroll, item, 200);
                 display.print(getScrolledText(scroll, item, maxLenOfItems));
