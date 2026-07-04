@@ -53,6 +53,10 @@ extern const uint8_t swPin;
 extern const uint8_t dtPin;
 extern const uint8_t clkPin;
 
+extern const uint8_t bclkPin;
+extern const uint8_t lrcPin;
+extern const uint8_t dinPin;
+
 // bounce2 buttons
 extern Bounce2::Button swRotary;
 extern Bounce2::Button backBtn;

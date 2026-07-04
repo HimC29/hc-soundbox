@@ -42,7 +42,7 @@ void initSdAudioOutput() {
     if(output == nullptr) {
         output = new AudioOutputI2S();
     }
-    output->SetPinout(26, 25, 27);
+    output->SetPinout(bclkPin, lrcPin, dinPin);
     output->SetGain(volume / 100.0);
 }
 

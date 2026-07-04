@@ -35,6 +35,10 @@ const uint8_t swPin = 34;
 const uint8_t dtPin = 33;
 const uint8_t clkPin = 32;
 
+const uint8_t bclkPin = 26;
+const uint8_t lrcPin = 25;
+const uint8_t dinPin = 27;
+
 Bounce2::Button swRotary;
 Bounce2::Button backBtn;
 

@@ -75,7 +75,7 @@ void startBluetoothMode(const char* deviceName) {
             Serial.printf("[BT] Insufficient contiguous heap (%d bytes), restarting\n", freeHeap);
             ESP.restart();
         }
-        btI2S.setPins(26, 25, 27);
+        btI2S.setPins(bclkPin, lrcPin, dinPin);
         btSampleRateHz = 44100;
         btRequestedSampleRateHz = btSampleRateHz;
         btSampleRateReinitPending = false;
@@ -117,7 +117,7 @@ bool handleBluetoothMode() {
         if(target != 0 && target != btSampleRateHz) {
             btSampleRateHz = target;
             btI2S.end();
-            btI2S.setPins(26, 25, 27);
+            btI2S.setPins(bclkPin, lrcPin, dinPin);
             btI2S.begin(I2S_MODE_STD, btSampleRateHz, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO, I2S_STD_SLOT_BOTH);
         }
     }
